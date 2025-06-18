@@ -1,0 +1,4 @@
+# write .gitignore for backend
+# Node.js dependencies
+node_modules/
+
