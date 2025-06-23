@@ -11,32 +11,37 @@
   font-size: 40px;
   font-weight: 700;
   color: #00e5ff;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
   letter-spacing: 2px;
   font-family: "Poppins", sans-serif;
 }
 
 .loader {
-  --s: 40px;
-  --g: 6px;
-  height: calc(var(--s) + var(--g));
-  aspect-ratio: 3;
-  background: radial-gradient(
-      calc(var(--s) / 1.4142) at calc(50% - 0.1 * var(--s))
-        calc(50% - 0.2 * var(--s)),
-      #0000 5%,
-      #111 98%
-    ),
-    linear-gradient(#00e5ff 0 0) no-repeat #fff;
-  background-size: calc(100% / 3) 100%;
-  mask: radial-gradient(calc(var(--s) / 2), #000 calc(100% - 1px), #0000) 0 /
-    calc(100% / 3) 100%;
-  animation: kinnect-bounce steps(3) 1.5s infinite;
-  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
 }
 
-@keyframes kinnect-bounce {
+.loader-dot {
+  width: 14px;
+  height: 14px;
+  background-color: #00e5ff;
+  border-radius: 50%;
+  animation: bounce 0.6s infinite alternate;
+}
+
+.loader-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loader-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes bounce {
   to {
-    background-position: 0, 150%;
+    transform: translateY(-16px);
+    opacity: 0.7;
   }
 }

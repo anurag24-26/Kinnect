@@ -5,7 +5,7 @@ import { AiFillHome } from "react-icons/ai";
 import { FaUserCircle, FaPlus } from "react-icons/fa";
 import { FiSettings, FiLogIn } from "react-icons/fi";
 import { useAuth } from "../contexts/AuthContexts";
-
+import Logosvg from "../assets/kinnectlogo.svg"; // Assuming you have a logo SVG file
 const Layout = () => {
   const { user, logout, loading } = useAuth();
   const navigate = useNavigate();
@@ -40,10 +40,11 @@ const Layout = () => {
           {/* Logo / Brand */}
           <Link
             to="/"
-            className="flex items-center gap-2 text-2xl font-extrabold text-cyan-600"
+            className="flex items-center gap-2 text-2xl font-extrabold "
           >
-            <BiHomeHeart className="text-3xl" />
-            Kinnect
+            <h1 className="cedarville-cursive-regular text-3xl text-black-800">
+              Kinnect
+            </h1>
           </Link>
 
           {/* Search Bar */}

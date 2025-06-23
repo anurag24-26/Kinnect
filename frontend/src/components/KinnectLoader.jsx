@@ -1,10 +1,12 @@
-import "./KinnectLoader.css";
-
 const KinnectLoader = () => {
   return (
     <div className="kinnect-loader">
-      <div className="kinnect-logo">Loading Kinnect...</div>
-      <div className="loader"></div>
+      <div className="kinnect-logo">Kinnect</div>
+      <div className="loader">
+        <div className="loader-dot"></div>
+        <div className="loader-dot"></div>
+        <div className="loader-dot"></div>
+      </div>
     </div>
   );
 };

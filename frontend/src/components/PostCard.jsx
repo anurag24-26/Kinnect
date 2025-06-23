@@ -81,11 +81,11 @@ const PostCard = ({ post }) => {
       setCommentLoading(false);
     }
   };
-
   useEffect(() => {
     if (token) {
       fetchLikeStatus();
       fetchLikeCount();
+      fetchComments(); // Fetch comments on initial load
     }
   }, [post._id]);
 

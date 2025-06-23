@@ -1,8 +1,8 @@
-import Comment from "../models/comment.model.js";
-import Post from "../models/post.model.js";
+const Comment = require("../models/comment.model");
+const Post = require("../models/post.model.js");
 
 // Add a new comment to a post
-export const addComment = async (req, res) => {
+exports.addComment = async (req, res) => {
   const { postId, text } = req.body;
 
   if (!text || !postId) {
@@ -33,7 +33,7 @@ export const addComment = async (req, res) => {
 };
 
 // Get all comments for a post
-export const getCommentsByPost = async (req, res) => {
+exports.getCommentsByPost = async (req, res) => {
   const { postId } = req.params;
 
   try {
