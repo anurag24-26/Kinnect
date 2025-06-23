@@ -1,18 +1,27 @@
-// src/components/Layout.jsx
+import { useState } from "react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { BiHomeHeart } from "react-icons/bi";
 import { AiFillHome } from "react-icons/ai";
-import { FaUser, FaUserCircle, FaPlus } from "react-icons/fa";
-import { FiSettings, FiLogIn, FiLogOut } from "react-icons/fi";
+import { FaUserCircle, FaPlus } from "react-icons/fa";
+import { FiSettings, FiLogIn } from "react-icons/fi";
 import { useAuth } from "../contexts/AuthContexts";
 
 const Layout = () => {
   const { user, logout, loading } = useAuth();
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleLogout = () => {
     logout();
     navigate("/login");
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/${searchQuery.trim()}`);
+      setSearchQuery("");
+    }
   };
 
   if (loading) {
@@ -36,6 +45,26 @@ const Layout = () => {
             <BiHomeHeart className="text-3xl" />
             Kinnect
           </Link>
+
+          {/* Search Bar */}
+          <form
+            onSubmit={handleSearchSubmit}
+            className="hidden md:flex items-center gap-2"
+          >
+            <input
+              type="text"
+              placeholder="Search username..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="px-3 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-400 text-sm"
+            />
+            <button
+              type="submit"
+              className="bg-cyan-600 text-white px-3 py-1 rounded hover:bg-cyan-700 text-sm"
+            >
+              Search
+            </button>
+          </form>
 
           {/* Navigation Links */}
           <div className="flex gap-4 items-center text-sm font-medium text-gray-700">
@@ -63,13 +92,6 @@ const Layout = () => {
                   <FaUserCircle className="text-lg" />
                   <Link to="/profile">{user.username}</Link>
                 </span>
-                {/* <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-1 hover:text-red-500"
-                >
-                  <FiLogOut className="text-lg" />
-                  Logout
-                </button> */}
                 <Link
                   to="/settings"
                   className="flex items-center gap-1 hover:text-cyan-600"
@@ -95,7 +117,7 @@ const Layout = () => {
         <Outlet />
       </main>
 
-      {/* Create Post Button */}
+      {/* Create Post Floating Button */}
       {user && (
         <Link
           to="/create"

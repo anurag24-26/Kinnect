@@ -1,25 +1,46 @@
-const Comment = require("../models/comment.model");
+import Comment from "../models/comment.model.js";
+import Post from "../models/post.model.js";
 
-exports.addComment = async (req, res) => {
+// Add a new comment to a post
+export const addComment = async (req, res) => {
+  const { postId, text } = req.body;
+
+  if (!text || !postId) {
+    return res.status(400).json({ message: "Text and postId are required." });
+  }
+
   try {
-    const { postId, text } = req.body;
-    const userId = req.user.id;
+    const comment = new Comment({
+      post: postId,
+      user: req.user.id,
+      text,
+    });
 
-    const comment = await Comment.create({ post: postId, user: userId, text });
-    res.status(201).json({ message: "Comment added", comment });
+    await comment.save();
+
+    // Optional: Add comment ID to the post's comments array
+    await Post.findByIdAndUpdate(postId, {
+      $push: { comments: comment._id },
+    });
+
+    const populatedComment = await comment.populate("user", "username avatar");
+    res.status(201).json(populatedComment);
   } catch (err) {
-    res.status(500).json({ message: "Failed to comment", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Failed to add comment", error: err.message });
   }
 };
 
-exports.getCommentsByPost = async (req, res) => {
-  try {
-    const { postId } = req.params;
+// Get all comments for a post
+export const getCommentsByPost = async (req, res) => {
+  const { postId } = req.params;
 
-    const comments = await Comment.find({ post: postId }).populate(
-      "user",
-      "username"
-    );
+  try {
+    const comments = await Comment.find({ post: postId })
+      .populate("user", "username avatar")
+      .sort({ createdAt: -1 });
+
     res.status(200).json(comments);
   } catch (err) {
     res

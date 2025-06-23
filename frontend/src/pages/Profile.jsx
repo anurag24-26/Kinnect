@@ -4,12 +4,16 @@ import { FaUserEdit, FaSignOutAlt, FaUpload } from "react-icons/fa";
 import PostCard from "../components/PostCard";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import KinnectLoader from "../components/KinnectLoader";
 
 const Profile = () => {
   const { user, logout } = useAuth();
   const [posts, setPosts] = useState([]);
+  const [followers, setFollowers] = useState([]);
+  const [following, setFollowing] = useState([]);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [comments, setComments] = useState({}); // postId -> [comments]
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
@@ -23,6 +27,10 @@ const Profile = () => {
 
       const userPosts = res.data.filter((post) => post.user._id === user._id);
       setPosts(userPosts);
+
+      for (let post of userPosts) {
+        fetchComments(post._id);
+      }
     } catch (err) {
       setError("Failed to load your posts");
       console.error(
@@ -32,8 +40,71 @@ const Profile = () => {
     }
   };
 
+  const fetchComments = async (postId) => {
+    try {
+      const res = await axios.get(
+        `http://localhost:5000/api/comments/${postId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setComments((prev) => ({ ...prev, [postId]: res.data }));
+    } catch (err) {
+      console.error(
+        "❌ Fetch comments error:",
+        err.response?.data || err.message
+      );
+    }
+  };
+
+  const handleAddComment = async (postId, text) => {
+    if (!text.trim()) return;
+    try {
+      await axios.post(
+        "http://localhost:5000/api/comments",
+        { postId, text },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      fetchComments(postId);
+    } catch (err) {
+      console.error(
+        "❌ Add comment failed:",
+        err.response?.data || err.message
+      );
+    }
+  };
+
+  const fetchFollowStats = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:5000/api/follows/${user._id}/stats`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setFollowers(res.data.followers || []);
+      setFollowing(res.data.following || []);
+    } catch (err) {
+      console.error(
+        "❌ Failed to fetch follow stats:",
+        err.response?.data || err.message
+      );
+    }
+  };
+
   useEffect(() => {
-    if (user) fetchUserPosts();
+    if (user) {
+      fetchUserPosts();
+      fetchFollowStats();
+    }
   }, [user]);
 
   const handleLogout = () => {
@@ -50,18 +121,14 @@ const Profile = () => {
 
     try {
       setUploading(true);
-      const res = await axios.patch(
-        "http://localhost:5000/api/users/me/avatar",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      await axios.patch("http://localhost:5000/api/users/me/avatar", formData, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
-      window.location.reload(); // reload to reflect avatar update
+      window.location.reload();
     } catch (err) {
       console.error(
         "❌ Avatar upload failed:",
@@ -73,12 +140,12 @@ const Profile = () => {
     }
   };
 
-  if (!user) return <p className="text-center mt-10">Loading profile...</p>;
+  if (!user) return <KinnectLoader />;
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-3xl mx-auto bg-white shadow-md rounded-xl p-6 mb-6">
-        <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-3xl mx-auto bg-white shadow rounded-xl p-6 mb-6">
+        <div className="flex items-center gap-6">
           <div className="relative group">
             {user.avatar ? (
               <img
@@ -114,8 +181,8 @@ const Profile = () => {
             <p className="text-sm text-gray-600">{user.email}</p>
             <div className="text-sm mt-1 text-gray-500 flex gap-4">
               <span>Posts: {posts.length}</span>
-              <span>Followers: {user.followers?.length || 0}</span>
-              <span>Following: {user.following?.length || 0}</span>
+              <span>Followers: {followers.length}</span>
+              <span>Following: {following.length}</span>
             </div>
           </div>
 
@@ -124,15 +191,13 @@ const Profile = () => {
               onClick={() => navigate("/edit-profile")}
               className="flex items-center gap-1 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700"
             >
-              <FaUserEdit />
-              Edit
+              <FaUserEdit /> Edit
             </button>
             <button
               onClick={handleLogout}
               className="flex items-center gap-1 bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700"
             >
-              <FaSignOutAlt />
-              Logout
+              <FaSignOutAlt /> Logout
             </button>
           </div>
         </div>
@@ -140,13 +205,17 @@ const Profile = () => {
 
       <div className="max-w-3xl mx-auto">
         <h3 className="text-xl font-semibold mb-4">Your Posts</h3>
-
-        {error && <p className="text-red-500">{error}</p>}
-
+        {error && <p className="text-red-500 mb-2">{error}</p>}
         {posts.length === 0 ? (
           <p className="text-gray-500">You haven't posted anything yet.</p>
         ) : (
-          posts.map((post) => <PostCard key={post._id} post={post} />)
+          posts.map((post) => (
+            <PostCard
+              key={post._id}
+              post={{ ...post, comments: comments[post._id] || [] }}
+              onAddComment={(text) => handleAddComment(post._id, text)}
+            />
+          ))
         )}
       </div>
     </div>

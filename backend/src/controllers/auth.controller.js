@@ -20,12 +20,15 @@ exports.register = async (req, res) => {
       .json({ message: "Registration failed", error: err.message });
   }
 };
-
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { identifier, password } = req.body; // Use 'identifier' instead of just 'email'
 
-    const user = await User.findOne({ email });
+    // Find user by email OR username
+    const user = await User.findOne({
+      $or: [{ email: identifier }, { username: identifier }],
+    });
+
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
     const match = await bcrypt.compare(password, user.password);
@@ -34,6 +37,7 @@ exports.login = async (req, res) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
+
     res.status(200).json({ message: "Login successful", token, user });
   } catch (err) {
     res.status(500).json({ message: "Login failed", error: err.message });

@@ -1,16 +1,93 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FaHeart, FaRegHeart, FaCommentDots } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import Slider from "react-slick";
+import axios from "axios";
 
 const PostCard = ({ post }) => {
   const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(post.likes?.length || 0);
+  const [likeCount, setLikeCount] = useState(0);
+  const [commentText, setCommentText] = useState("");
+  const [commentLoading, setCommentLoading] = useState(false);
+  const [commentError, setCommentError] = useState("");
+  const [comments, setComments] = useState(post.comments || []);
 
-  const toggleLike = () => {
-    setLiked(!liked);
-    setLikeCount((prev) => (liked ? prev - 1 : prev + 1));
+  const token = localStorage.getItem("token");
+
+  const fetchLikeStatus = async () => {
+    try {
+      const res = await axios.get(`/api/likes/${post._id}/status`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setLiked(res.data.liked);
+    } catch (err) {
+      console.error("❌ Failed to fetch like status", err);
+    }
   };
+
+  const fetchLikeCount = async () => {
+    try {
+      const res = await axios.get(`/api/likes/${post._id}/count`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setLikeCount(res.data.count);
+    } catch (err) {
+      console.error("❌ Failed to fetch like count", err);
+    }
+  };
+
+  const toggleLike = async () => {
+    try {
+      const res = await axios.post(
+        `/api/likes/${post._id}/toggle`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      setLiked(res.data.liked);
+      setLikeCount((prev) => (res.data.liked ? prev + 1 : prev - 1));
+    } catch (err) {
+      console.error("❌ Failed to toggle like", err);
+    }
+  };
+  const fetchComments = async () => {
+    try {
+      const res = await axios.get(`/api/comments/${post._id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setComments(res.data);
+    } catch (err) {
+      console.error("❌ Failed to fetch comments", err);
+    }
+  };
+  const handleCommentSubmit = async (e) => {
+    e.preventDefault();
+    if (!commentText.trim()) return;
+
+    try {
+      setCommentLoading(true);
+      await axios.post(
+        `/api/comments`,
+        { postId: post._id, text: commentText },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setCommentText("");
+      fetchComments(); // refresh comments
+    } catch (err) {
+      setCommentError("Failed to post comment");
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchLikeStatus();
+      fetchLikeCount();
+    }
+  }, [post._id]);
 
   const sliderSettings = {
     dots: true,
@@ -18,7 +95,7 @@ const PostCard = ({ post }) => {
     speed: 500,
     slidesToShow: 1,
     slidesToScroll: 1,
-    arrows: post.images.length > 1, // only show arrows if multiple images
+    arrows: post.images?.length > 1,
   };
 
   return (
@@ -49,10 +126,7 @@ const PostCard = ({ post }) => {
         </div>
       </div>
 
-      {/* Post Text */}
-      <p className="text-sm text-gray-800 mb-3">{post.text}</p>
-
-      {/* Post Image(s) */}
+      {/* Post Images */}
       {post.images?.length > 0 && (
         <div className="mb-3 rounded-xl overflow-hidden">
           {post.images.length === 1 ? (
@@ -80,6 +154,9 @@ const PostCard = ({ post }) => {
         </div>
       )}
 
+      {/* Text Content */}
+      <p className="text-sm text-gray-800 mb-3">{post.text}</p>
+
       {/* Tags */}
       {post.tags?.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-2">
@@ -94,7 +171,7 @@ const PostCard = ({ post }) => {
         </div>
       )}
 
-      {/* Actions */}
+      {/* Like & Comment Counts */}
       <div className="flex justify-start items-center gap-8 mt-5 pt-3 border-t border-gray-100 text-sm">
         <button
           onClick={toggleLike}
@@ -108,11 +185,43 @@ const PostCard = ({ post }) => {
           <span className="text-lg">{likeCount}</span>
         </button>
 
-        <button className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition text-xl">
-          <FaCommentDots className="text-2xl" />
-          <span className="text-lg">{post.comments?.length || 0}</span>
-        </button>
+        <div className="flex items-center gap-2 text-gray-600 text-xl">
+          <FaCommentDots className="text-blue-500 text-2xl" />
+          <span className="text-lg">{comments.length}</span>
+        </div>
       </div>
+      <div className="mt-3 space-y-2">
+        {comments.slice(-3).map((comment, index) => (
+          <p
+            key={index}
+            className="text-sm text-gray-700 border-l-2 pl-2 border-cyan-400"
+          >
+            <span className="font-semibold">@{comment.user?.username}:</span>{" "}
+            {comment.text}
+          </p>
+        ))}
+      </div>
+
+      {/* Comment Input */}
+      <form
+        onSubmit={handleCommentSubmit}
+        className="flex items-center gap-2 mt-4"
+      >
+        <input
+          value={commentText}
+          onChange={(e) => setCommentText(e.target.value)}
+          placeholder="Write a comment..."
+          className="flex-1 px-3 py-1 border border-gray-300 rounded-lg text-sm"
+        />
+        <button
+          type="submit"
+          disabled={commentLoading}
+          className="bg-cyan-600 text-white px-4 py-1 rounded hover:bg-cyan-700"
+        >
+          {commentLoading ? "Posting..." : "Post"}
+        </button>
+      </form>
+      {commentError && <p className="text-red-500 mt-2">{commentError}</p>}
     </div>
   );
 };

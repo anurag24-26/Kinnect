@@ -1,20 +1,19 @@
 const express = require("express");
 const router = express.Router();
+const requireAuth = require("../middlewares/auth.middleware");
 const {
   followUser,
   unfollowUser,
-  getFollowStats, // Optional
+  getFollowStats,
 } = require("../controllers/follow.controller");
-const requireAuth = require("../middlewares/auth.middleware");
 
-// Follow a user
+// POST /api/follows/:id/follow -> Follow a user
 router.post("/:id/follow", requireAuth, followUser);
 
-// Unfollow a user
+// POST /api/follows/:id/unfollow -> Unfollow a user
 router.post("/:id/unfollow", requireAuth, unfollowUser);
 
-// Get follower/following stats for a user (optional)
-
+// GET /api/follows/:id/stats -> Get followers and following list
 router.get("/:id/stats", requireAuth, getFollowStats);
 
 module.exports = router;

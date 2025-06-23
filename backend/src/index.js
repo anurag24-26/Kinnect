@@ -4,11 +4,12 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
-
+const searchRoutes = require("./routes/search.routes");
 const { connectDB } = require("./config");
 const errorHandler = require("./middlewares/error.middleware");
 const limiter = require("./middlewares/rateLimiter.middleware");
 const { initSocket } = require("./sockets");
+const likeRoutes = require("./routes/like.routes");
 
 // Load env vars
 dotenv.config();
@@ -39,6 +40,8 @@ app.use("/api/posts", require("./routes/post.routes"));
 app.use("/api/comments", require("./routes/comment.routes"));
 app.use("/api/follows", require("./routes/follow.routes"));
 app.use("/api/notifications", require("./routes/notification.routes"));
+app.use("/api/likes", likeRoutes);
+app.use("/api/search", searchRoutes);
 
 // Error handler
 app.use(errorHandler);

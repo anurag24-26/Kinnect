@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import Button from "../components/Button";
 import { FiUserPlus } from "react-icons/fi";
+import Button from "../components/Button";
 
 const Register = () => {
   const [form, setForm] = useState({ username: "", email: "", password: "" });
@@ -12,7 +12,7 @@ const Register = () => {
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-    setError(""); // clear error on change
+    setError("");
   };
 
   const handleSubmit = async (e) => {
@@ -24,73 +24,96 @@ const Register = () => {
         "http://localhost:5000/api/auth/register",
         form
       );
-      console.log("✅ Registration successful:", res.data);
-
-      // Optional: Auto login
-      localStorage.setItem("token", res.data.token); // if token returned
+      localStorage.setItem("token", res.data.token);
       navigate("/");
     } catch (err) {
-      console.error(
-        "❌ Registration failed:",
-        err.response?.data || err.message
+      setError(
+        err.response?.data?.message === "Username already exists"
+          ? "Username is already taken. Please choose another."
+          : err.response?.data?.message ||
+              "Something went wrong. Please try again."
       );
-      setError(err.response?.data?.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-xl shadow-xl w-full max-w-md border border-gray-200"
-      >
-        <div className="flex items-center gap-2 mb-6 text-cyan-600">
-          <FiUserPlus className="text-2xl" />
-          <h2 className="text-xl font-bold">Create Account</h2>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 to-blue-100 px-4">
+      <div className="w-full max-w-xl bg-white shadow-2xl p-10 rounded-2xl border-t-4 border-cyan-500">
+        {/* Logo or App name */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-extrabold text-cyan-600">Kinnect</h1>
+          <p className="text-gray-500 mt-1 text-sm">
+            Connect seamlessly with your world 🌐
+          </p>
         </div>
 
-        {error && <p className="text-red-500 mb-3 text-sm">{error}</p>}
+        {/* Title */}
+        <div className="flex items-center gap-2 mb-6 text-cyan-600">
+          <FiUserPlus className="text-2xl" />
+          <h2 className="text-xl font-semibold">Create Your Kinnect Account</h2>
+        </div>
 
-        <input
-          name="username"
-          placeholder="Username"
-          value={form.username}
-          onChange={handleChange}
-          required
-          className="w-full p-3 mb-3 rounded-md border border-gray-300"
-        />
-        <input
-          name="email"
-          type="email"
-          placeholder="Email"
-          value={form.email}
-          onChange={handleChange}
-          required
-          className="w-full p-3 mb-3 rounded-md border border-gray-300"
-        />
-        <input
-          name="password"
-          type="password"
-          placeholder="Password"
-          value={form.password}
-          onChange={handleChange}
-          required
-          className="w-full p-3 mb-6 rounded-md border border-gray-300"
-        />
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-100 text-red-700 border border-red-200 p-3 mb-4 rounded-md text-sm">
+            {error}
+          </div>
+        )}
 
-        <Button type="submit" variant="primary" disabled={loading}>
-          {loading ? "Registering..." : "Register"}
-        </Button>
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            name="username"
+            placeholder="Username"
+            value={form.username}
+            onChange={handleChange}
+            required
+            className={`w-full p-3 rounded-lg border ${
+              error.includes("Username") ? "border-red-400" : "border-gray-300"
+            } focus:ring-2 focus:ring-cyan-500 outline-none`}
+          />
+          <input
+            name="email"
+            type="email"
+            placeholder="Email"
+            value={form.email}
+            onChange={handleChange}
+            required
+            className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-cyan-500 outline-none"
+          />
+          <input
+            name="password"
+            type="password"
+            placeholder="Password"
+            value={form.password}
+            onChange={handleChange}
+            required
+            className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-cyan-500 outline-none"
+          />
 
-        <p className="mt-3 text-sm text-gray-600">
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={loading}
+            className="w-full mt-4 bg-cyan-600 hover:bg-cyan-700 text-white font-medium rounded-lg p-3 disabled:opacity-50 transition-all"
+          >
+            {loading ? "Registering..." : "Register"}
+          </Button>
+        </form>
+
+        {/* Footer Link */}
+        <p className="mt-6 text-sm text-center text-gray-600">
           Already have an account?{" "}
-          <Link to="/login" className="text-cyan-600 hover:underline">
-            Login
+          <Link
+            to="/login"
+            className="text-cyan-600 font-medium hover:underline"
+          >
+            Login here
           </Link>
         </p>
-      </form>
+      </div>
     </div>
   );
 };

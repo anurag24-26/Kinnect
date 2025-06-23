@@ -1,22 +1,27 @@
 import { useEffect, useState } from "react";
 import { MdCampaign } from "react-icons/md";
 import PostCard from "../components/PostCard";
-import { Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContexts";
+import KinnectLoader from "../components/KinnectLoader"; // ⬅️ Import here
 import axios from "axios";
 
 const Home = () => {
   const [posts, setPosts] = useState([]);
   const [error, setError] = useState("");
 
+  const { user, loading } = useAuth();
+
   const fetchPosts = async () => {
     try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
       const res = await axios.get("/api/posts", {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
-      console.log("✅ Response from /api/posts:", res.data); // <-- Add this
       setPosts(res.data);
     } catch (err) {
       setError("Failed to load posts");
@@ -25,8 +30,14 @@ const Home = () => {
   };
 
   useEffect(() => {
-    fetchPosts();
-  }, []);
+    if (!loading && user) {
+      fetchPosts();
+    }
+  }, [loading, user]);
+
+  if (loading) {
+    return <KinnectLoader />;
+  }
 
   return (
     <div className="min-h-screen bg-white text-gray-900 p-4">
