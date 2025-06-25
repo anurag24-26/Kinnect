@@ -78,12 +78,18 @@ const ViewProfile = () => {
       await Promise.all(
         posts.map(async (post) => {
           const [statusRes, countRes] = await Promise.all([
-            axios.get(`/api/likes/${post._id}/status`, {
-              headers: { Authorization: `Bearer ${token}` },
-            }),
-            axios.get(`/api/likes/${post._id}/count`, {
-              headers: { Authorization: `Bearer ${token}` },
-            }),
+            axios.get(
+              `https://kinnectbackend.onrender.com/api/likes/${post._id}/status`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            ),
+            axios.get(
+              `https://kinnectbackend.onrender.com/api/likes/${post._id}/count`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            ),
           ]);
           likeStatusObj[post._id] = statusRes.data.liked;
           likeCountObj[post._id] = countRes.data.count;

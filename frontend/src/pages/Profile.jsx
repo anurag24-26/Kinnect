@@ -150,59 +150,73 @@ const Profile = () => {
   if (!user) return <KinnectLoader />;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-3xl mx-auto bg-white shadow rounded-xl p-6 mb-6">
-        <div className="flex items-center gap-6">
-          <div className="relative group">
-            {user.avatar ? (
-              <img
-                src={user.avatar}
-                alt="Avatar"
-                className="h-20 w-20 rounded-full object-cover border-2 border-gray-300"
+    <div className="min-h-screen bg-gray-100 p-4 sm:p-6">
+      {/* Profile Header */}
+      <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-md p-5 sm:p-8 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+          {/* Avatar + Info */}
+          <div className="flex flex-col sm:flex-row items-center gap-6">
+            <div className="relative group w-24 h-24 shrink-0">
+              {user.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt="Avatar"
+                  className="w-full h-full rounded-full object-cover border-4 border-cyan-500"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-300 rounded-full flex items-center justify-center text-gray-700 text-3xl font-bold border-4 border-cyan-500">
+                  {user.username[0].toUpperCase()}
+                </div>
+              )}
+              <button
+                onClick={() => fileInputRef.current.click()}
+                className="absolute bottom-1 right-1 bg-cyan-600 hover:bg-cyan-700 text-white p-1 rounded-full shadow-md transition"
+                title="Upload Avatar"
+              >
+                <FaUpload size={12} />
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarUpload}
+                hidden
+                disabled={uploading}
               />
-            ) : (
-              <div className="h-20 w-20 bg-gray-300 rounded-full flex items-center justify-center text-gray-700 text-2xl font-bold">
-                {user.username[0].toUpperCase()}
+            </div>
+
+            {/* Info */}
+            <div className="text-center sm:text-left">
+              <h2 className="text-2xl font-bold text-gray-800">
+                {user.username}
+              </h2>
+              <p className="text-sm text-gray-500">{user.email}</p>
+
+              <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-3 text-sm">
+                <span className="bg-cyan-100 text-cyan-800 px-3 py-1 rounded-full font-medium">
+                  Posts: {posts.length}
+                </span>
+                <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium">
+                  Followers: {followers.length}
+                </span>
+                <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full font-medium">
+                  Following: {following.length}
+                </span>
               </div>
-            )}
-
-            <button
-              onClick={() => fileInputRef.current.click()}
-              className="absolute bottom-0 right-0 bg-blue-500 hover:bg-blue-600 text-white p-1 rounded-full shadow-lg"
-              title="Upload Avatar"
-            >
-              <FaUpload size={14} />
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarUpload}
-              hidden
-              disabled={uploading}
-            />
-          </div>
-
-          <div>
-            <h2 className="text-2xl font-bold">{user.username}</h2>
-            <p className="text-sm text-gray-600">{user.email}</p>
-            <div className="text-sm mt-1 text-gray-500 flex gap-4">
-              <span>Posts: {posts.length}</span>
-              <span>Followers: {followers.length}</span>
-              <span>Following: {following.length}</span>
             </div>
           </div>
 
-          <div className="ml-auto flex gap-3">
+          {/* Buttons */}
+          <div className="flex flex-wrap justify-center sm:justify-end gap-3">
             <button
               onClick={() => navigate("/edit-profile")}
-              className="flex items-center gap-1 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700"
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full shadow-md transition text-sm"
             >
               <FaUserEdit /> Edit
             </button>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-1 bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700"
+              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full shadow-md transition text-sm"
             >
               <FaSignOutAlt /> Logout
             </button>
@@ -210,19 +224,27 @@ const Profile = () => {
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto">
-        <h3 className="text-xl font-semibold mb-4">Your Posts</h3>
-        {error && <p className="text-red-500 mb-2">{error}</p>}
+      {/* Posts Section */}
+      <div className="max-w-4xl mx-auto">
+        <h3 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 px-2 sm:px-0">
+          Your Posts
+        </h3>
+        {error && <p className="text-red-500 mb-4">{error}</p>}
+
         {posts.length === 0 ? (
-          <p className="text-gray-500">You haven't posted anything yet.</p>
+          <div className="bg-white p-6 rounded-xl shadow text-gray-500 text-center">
+            You haven’t posted anything yet.
+          </div>
         ) : (
-          posts.map((post) => (
-            <PostCard
-              key={post._id}
-              post={{ ...post, comments: comments[post._id] || [] }}
-              onAddComment={(text) => handleAddComment(post._id, text)}
-            />
-          ))
+          <div className="space-y-6 px-2 sm:px-0">
+            {posts.map((post) => (
+              <PostCard
+                key={post._id}
+                post={{ ...post, comments: comments[post._id] || [] }}
+                onAddComment={(text) => handleAddComment(post._id, text)}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>

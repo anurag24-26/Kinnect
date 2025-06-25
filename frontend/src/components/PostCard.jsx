@@ -106,26 +106,25 @@ const PostCard = ({ post }) => {
     slidesToScroll: 1,
     arrows: post.images?.length > 1,
   };
-
   return (
-    <div className="bg-white rounded-3xl shadow-md p-6 border border-gray-200 max-w-2xl mx-auto my-6 transition-all hover:shadow-xl">
+    <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 border border-gray-200 max-w-xl w-full mx-auto mb-6 transition hover:shadow-md">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-4">
+      <div className="flex items-center gap-3 mb-3">
         {post.user.avatar ? (
           <img
             src={post.user.avatar}
             alt="User Avatar"
-            className="h-12 w-12 rounded-full object-cover border-2 border-cyan-500"
+            className="h-10 w-10 rounded-full object-cover border-2 border-cyan-500"
           />
         ) : (
-          <div className="h-12 w-12 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-700 font-bold text-lg border-2 border-cyan-500">
+          <div className="h-10 w-10 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-700 font-bold text-base border-2 border-cyan-500">
             {post.user.username[0].toUpperCase()}
           </div>
         )}
         <div>
           <Link
             to={`/profile/${post.user._id}`}
-            className="text-lg font-semibold text-cyan-700 hover:underline"
+            className="text-sm font-semibold text-cyan-700 hover:underline"
           >
             {post.user.username}
           </Link>
@@ -135,114 +134,112 @@ const PostCard = ({ post }) => {
         </div>
       </div>
 
-      {/* Post Content */}
-      <div className="space-y-4">
-        {/* Post Text */}
-        <p className="text-gray-800 text-base">{post.text}</p>
+      {/* Post Text */}
+      {post.text && (
+        <p className="text-gray-800 text-sm mb-3 break-words">{post.text}</p>
+      )}
 
-        {/* Images */}
-        {post.images?.length > 0 && (
-          <div className="rounded-xl overflow-hidden">
-            {post.images.length === 1 ? (
+      {/* Images */}
+      {post.images?.length > 0 && (
+        <div className="rounded-md overflow-hidden mb-3">
+          {post.images.length === 1 ? (
+            <div className="aspect-video bg-black flex items-center justify-center">
               <img
                 src={post.images[0]}
                 alt="Post"
-                className="w-full max-h-[400px] object-cover rounded-xl"
+                className="object-contain max-h-full max-w-full"
               />
-            ) : (
-              <Slider {...sliderSettings}>
-                {post.images.map((img, idx) => (
-                  <div
-                    key={idx}
-                    className="h-[400px] flex justify-center items-center bg-gray-100"
-                  >
-                    <img
-                      src={img}
-                      alt={`Post ${idx}`}
-                      className="max-h-full max-w-full rounded-xl"
-                    />
-                  </div>
-                ))}
-              </Slider>
-            )}
-          </div>
-        )}
+            </div>
+          ) : (
+            <Slider {...sliderSettings}>
+              {post.images.map((img, idx) => (
+                <div
+                  key={idx}
+                  className="aspect-video flex justify-center items-center content-center bg-black"
+                >
+                  <img
+                    src={img}
+                    alt={`Post ${idx}`}
+                    className="object-contain max-h-full max-w-full"
+                  />
+                </div>
+              ))}
+            </Slider>
+          )}
+        </div>
+      )}
 
-        {/* Tags */}
-        {post.tags?.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {post.tags.map((tag, i) => (
-              <span
-                key={i}
-                className="text-xs bg-cyan-100 text-cyan-800 px-2 py-1 rounded-full font-medium"
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Tags */}
+      {Array.isArray(post.tags) && post.tags.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-2">
+          {post.tags.map((tag, i) => (
+            <span
+              key={i}
+              className="text-xs bg-cyan-100 text-cyan-800 px-2 py-1 rounded-full break-words"
+            >
+              #{tag}
+            </span>
+          ))}
+        </div>
+      )}
 
-      {/* Reactions */}
-      <div className="flex justify-between items-center mt-6 border-t pt-4 border-gray-100 text-sm">
+      {/* Like + Comment Summary */}
+      <div className="flex justify-between items-center text-sm mt-2 border-t pt-3 border-gray-100">
         <button
           onClick={toggleLike}
-          className="flex items-center gap-2 text-gray-600 hover:text-red-500 transition"
+          className="flex items-center gap-1 text-gray-600 hover:text-red-500 transition"
         >
           {liked ? (
-            <FaHeart className="text-red-500 text-xl" />
+            <FaHeart className="text-red-500 text-lg" />
           ) : (
-            <FaRegHeart className="text-xl" />
+            <FaRegHeart className="text-lg" />
           )}
           <span>{likeCount}</span>
         </button>
 
-        <div className="flex items-center gap-2 text-gray-600">
-          <FaCommentDots className="text-blue-500 text-xl" />
+        <div className="flex items-center gap-1 text-gray-600">
+          <FaCommentDots className="text-blue-500 text-lg" />
           <span>{comments.length}</span>
         </div>
       </div>
 
-      {/* Comments */}
-      <div className="mt-4 space-y-2">
-        {comments.slice(-3).map((comment, i) => (
-          <div
+      {/* Mini Comments */}
+      <div className="mt-3 space-y-1">
+        {comments.slice(-2).map((comment, i) => (
+          <p
             key={i}
-            className="bg-gray-50 px-3 py-2 rounded-lg border border-gray-100"
+            className="text-xs text-gray-700 border-l-2 pl-2 border-cyan-400"
           >
-            <p className="text-sm text-gray-700">
-              <span className="font-semibold text-cyan-700">
-                @{comment.user?.username}:
-              </span>{" "}
-              {comment.text}
-            </p>
-          </div>
+            <span className="font-semibold">@{comment.user?.username}</span>:{" "}
+            {comment.text.length > 60
+              ? `${comment.text.slice(0, 60)}...`
+              : comment.text}
+          </p>
         ))}
       </div>
 
-      {/* Add Comment */}
+      {/* Comment Input */}
       <form
         onSubmit={handleCommentSubmit}
-        className="flex items-center gap-3 mt-4"
+        className="flex items-center gap-2 mt-3"
       >
         <input
           value={commentText}
           onChange={(e) => setCommentText(e.target.value)}
-          placeholder="Write a comment..."
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          placeholder="Comment..."
+          className="flex-1 px-3 py-1.5 border border-gray-300 rounded-full text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
         />
         <button
           type="submit"
           disabled={commentLoading}
-          className="bg-cyan-600 text-white px-4 py-2 rounded-full text-sm hover:bg-cyan-700 transition"
+          className="bg-cyan-600 text-white px-3 py-1.5 text-xs rounded-full hover:bg-cyan-700 transition"
         >
-          {commentLoading ? "Posting..." : "Post"}
+          {commentLoading ? "..." : "Post"}
         </button>
       </form>
 
-      {/* Error Message */}
       {commentError && (
-        <p className="text-red-500 text-sm mt-2">{commentError}</p>
+        <p className="text-red-500 text-xs mt-1">{commentError}</p>
       )}
     </div>
   );
