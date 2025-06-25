@@ -16,11 +16,14 @@ const Home = () => {
       const token = localStorage.getItem("token");
       if (!token) return;
 
-      const res = await axios.get("/api/posts", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await axios.get(
+        "https://kinnectbackend.onrender.com/api/posts",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       setPosts(res.data);
     } catch (err) {

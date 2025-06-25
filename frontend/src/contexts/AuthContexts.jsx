@@ -16,11 +16,14 @@ export const AuthProvider = ({ children }) => {
         setUser(JSON.parse(storedUser)); // Temporarily set user for faster UI
 
         try {
-          const res = await axios.get("http://localhost:5000/api/users/me", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
+          const res = await axios.get(
+            "https://kinnectbackend.onrender.com/api/users/me",
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
           setUser(res.data); // Refresh user data from server
           localStorage.setItem("user", JSON.stringify(res.data)); // update cached user
         } catch (err) {

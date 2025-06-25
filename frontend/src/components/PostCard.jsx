@@ -16,9 +16,12 @@ const PostCard = ({ post }) => {
 
   const fetchLikeStatus = async () => {
     try {
-      const res = await axios.get(`/api/likes/${post._id}/status`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get(
+        `https://kinnectbackend.onrender.com/api/likes/${post._id}/status`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       setLiked(res.data.liked);
     } catch (err) {
       console.error("❌ Failed to fetch like status", err);
@@ -27,9 +30,12 @@ const PostCard = ({ post }) => {
 
   const fetchLikeCount = async () => {
     try {
-      const res = await axios.get(`/api/likes/${post._id}/count`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get(
+        `https://kinnectbackend.onrender.com/api/likes/${post._id}/count`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       setLikeCount(res.data.count);
     } catch (err) {
       console.error("❌ Failed to fetch like count", err);
@@ -39,7 +45,7 @@ const PostCard = ({ post }) => {
   const toggleLike = async () => {
     try {
       const res = await axios.post(
-        `/api/likes/${post._id}/toggle`,
+        `https://kinnectbackend.onrender.com/api/likes/${post._id}/toggle`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -54,9 +60,12 @@ const PostCard = ({ post }) => {
   };
   const fetchComments = async () => {
     try {
-      const res = await axios.get(`/api/comments/${post._id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get(
+        `https://kinnectbackend.onrender.com/api/comments/${post._id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       setComments(res.data);
     } catch (err) {
       console.error("❌ Failed to fetch comments", err);
@@ -69,7 +78,7 @@ const PostCard = ({ post }) => {
     try {
       setCommentLoading(true);
       await axios.post(
-        `/api/comments`,
+        `https://kinnectbackend.onrender.com/api/comments`,
         { postId: post._id, text: commentText },
         { headers: { Authorization: `Bearer ${token}` } }
       );

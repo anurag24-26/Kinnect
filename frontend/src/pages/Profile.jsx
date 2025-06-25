@@ -19,11 +19,14 @@ const Profile = () => {
 
   const fetchUserPosts = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/posts", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const res = await axios.get(
+        "https://kinnectbackend.onrender.com/api/posts",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
       const userPosts = res.data.filter((post) => post.user._id === user._id);
       setPosts(userPosts);
@@ -43,7 +46,7 @@ const Profile = () => {
   const fetchComments = async (postId) => {
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/comments/${postId}`,
+        `https://kinnectbackend.onrender.com/api/comments/${postId}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -63,7 +66,7 @@ const Profile = () => {
     if (!text.trim()) return;
     try {
       await axios.post(
-        "http://localhost:5000/api/comments",
+        "https://kinnectbackend.onrender.com/api/comments",
         { postId, text },
         {
           headers: {
@@ -83,7 +86,7 @@ const Profile = () => {
   const fetchFollowStats = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/follows/${user._id}/stats`,
+        `https://kinnectbackend.onrender.com/api/follows/${user._id}/stats`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -121,12 +124,16 @@ const Profile = () => {
 
     try {
       setUploading(true);
-      await axios.patch("http://localhost:5000/api/users/me/avatar", formData, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      await axios.patch(
+        "https://kinnectbackend.onrender.com/api/users/me/avatar",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       window.location.reload();
     } catch (err) {

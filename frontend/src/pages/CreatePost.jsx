@@ -35,7 +35,7 @@ const CreatePost = () => {
       images.forEach((img) => formData.append("images", img));
 
       const res = await axios.post(
-        "http://localhost:5000/api/posts",
+        "https://kinnectbackend.onrender.com/api/posts",
         formData,
         {
           headers: {
