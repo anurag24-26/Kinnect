@@ -1,5 +1,6 @@
 const Like = require("../models/like.model");
 const Post = require("../models/post.model");
+const Notification = require("../models/notification.model"); // ✅ Make sure to import
 
 exports.toggleLike = async (req, res) => {
   try {
@@ -13,6 +14,18 @@ exports.toggleLike = async (req, res) => {
       return res.status(200).json({ liked: false, message: "Post unliked" });
     } else {
       await Like.create({ user: userId, post: postId });
+
+      // 🔔 Send notification only if not liking own post
+      const post = await Post.findById(postId);
+      if (post && post.user.toString() !== userId) {
+        await Notification.create({
+          type: "like",
+          sender: userId,
+          receiver: post.user,
+          post: postId,
+        });
+      }
+
       return res.status(201).json({ liked: true, message: "Post liked" });
     }
   } catch (err) {
@@ -50,12 +63,3 @@ exports.hasLiked = async (req, res) => {
       .json({ message: "Failed to check like", error: err.message });
   }
 };
-// After saving the like
-if (post.user.toString() !== req.user.id) {
-  await Notification.create({
-    type: "like",
-    sender: req.user.id,
-    receiver: post.user,
-    post: postId,
-  });
-}

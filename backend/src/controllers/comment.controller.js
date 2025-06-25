@@ -1,5 +1,6 @@
 const Comment = require("../models/comment.model");
-const Post = require("../models/post.model.js");
+const Post = require("../models/post.model");
+const Notification = require("../models/notification.model"); // ✅ Don't forget this!
 
 // Add a new comment to a post
 exports.addComment = async (req, res) => {
@@ -17,6 +18,19 @@ exports.addComment = async (req, res) => {
     });
 
     await comment.save();
+
+    // 🔔 Fetch post to get the owner
+    const post = await Post.findById(postId);
+
+    // 🔔 Create notification
+    if (post.user.toString() !== req.user.id) {
+      await Notification.create({
+        type: "comment",
+        sender: req.user.id,
+        receiver: post.user,
+        post: postId,
+      });
+    }
 
     // Optional: Add comment ID to the post's comments array
     await Post.findByIdAndUpdate(postId, {
@@ -48,21 +62,3 @@ exports.getCommentsByPost = async (req, res) => {
       .json({ message: "Failed to get comments", error: err.message });
   }
 };
-await comment.save();
-
-await Post.findByIdAndUpdate(postId, {
-  $push: { comments: comment._id },
-});
-
-// 🔔 Fetch post to get the owner
-const post = await Post.findById(postId);
-
-// 🔔 Create notification
-if (post.user.toString() !== req.user.id) {
-  await Notification.create({
-    type: "comment",
-    sender: req.user.id,
-    receiver: post.user,
-    post: postId,
-  });
-}

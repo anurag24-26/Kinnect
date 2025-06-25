@@ -1,6 +1,6 @@
 const Follow = require("../models/follow.model");
 const User = require("../models/user.model");
-
+const Notification = require("../models/notification.model");
 // Follow a user
 exports.followUser = async (req, res) => {
   try {
@@ -21,8 +21,14 @@ exports.followUser = async (req, res) => {
     if (alreadyFollowing) {
       return res.status(400).json({ message: "Already following this user." });
     }
-
     await Follow.create({ follower, following });
+
+    // 🔔 Create notification
+    await Notification.create({
+      type: "follow",
+      sender: follower,
+      receiver: following,
+    });
 
     res.status(200).json({ message: "Followed successfully." });
   } catch (err) {
@@ -82,11 +88,3 @@ exports.getFollowStats = async (req, res) => {
       .json({ message: "Failed to fetch follow stats", error: error.message });
   }
 };
-await Follow.create({ follower, following });
-
-// 🔔 Create notification
-await Notification.create({
-  type: "follow",
-  sender: follower,
-  receiver: following,
-});
