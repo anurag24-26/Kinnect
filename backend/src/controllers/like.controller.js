@@ -50,3 +50,12 @@ exports.hasLiked = async (req, res) => {
       .json({ message: "Failed to check like", error: err.message });
   }
 };
+// After saving the like
+if (post.user.toString() !== req.user.id) {
+  await Notification.create({
+    type: "like",
+    sender: req.user.id,
+    receiver: post.user,
+    post: postId,
+  });
+}

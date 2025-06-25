@@ -48,3 +48,21 @@ exports.getCommentsByPost = async (req, res) => {
       .json({ message: "Failed to get comments", error: err.message });
   }
 };
+await comment.save();
+
+await Post.findByIdAndUpdate(postId, {
+  $push: { comments: comment._id },
+});
+
+// 🔔 Fetch post to get the owner
+const post = await Post.findById(postId);
+
+// 🔔 Create notification
+if (post.user.toString() !== req.user.id) {
+  await Notification.create({
+    type: "comment",
+    sender: req.user.id,
+    receiver: post.user,
+    post: postId,
+  });
+}

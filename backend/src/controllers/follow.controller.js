@@ -82,3 +82,11 @@ exports.getFollowStats = async (req, res) => {
       .json({ message: "Failed to fetch follow stats", error: error.message });
   }
 };
+await Follow.create({ follower, following });
+
+// 🔔 Create notification
+await Notification.create({
+  type: "follow",
+  sender: follower,
+  receiver: following,
+});

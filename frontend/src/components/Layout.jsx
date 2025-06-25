@@ -6,6 +6,7 @@ import { FaUserCircle, FaPlus } from "react-icons/fa";
 import { FiSettings, FiLogIn } from "react-icons/fi";
 import { useAuth } from "../contexts/AuthContexts";
 import Logosvg from "../assets/kinnectlogo.svg"; // Assuming you have a logo SVG file
+import NotificationBell from "./NotificationBell";
 const Layout = () => {
   const { user, logout, loading } = useAuth();
   const navigate = useNavigate();
@@ -86,7 +87,7 @@ const Layout = () => {
                 Create
               </Link>
             )}
-
+            <NotificationBell />
             {user ? (
               <>
                 <span className="hidden md:inline-flex items-center gap-1 text-cyan-700">
