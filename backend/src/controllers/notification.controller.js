@@ -3,9 +3,10 @@ const Notification = require("../models/notification.model");
 exports.getNotifications = async (req, res) => {
   try {
     const userId = req.user.id;
-    const notifications = await Notification.find({ receiver: userId }).sort({
-      createdAt: -1,
-    });
+    const notifications = await Notification.find({ receiver: userId })
+      .sort({ createdAt: -1 })
+      .populate("sender", "username avatar") // ✅ show @username and profile
+      .populate("receiver", "username");
 
     res.status(200).json({ notifications });
   } catch (err) {
