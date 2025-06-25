@@ -108,24 +108,24 @@ const PostCard = ({ post }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-md p-5 border border-gray-200 max-w-xl mx-auto my-6 transition hover:shadow-lg">
-      {/* User Info */}
+    <div className="bg-white rounded-3xl shadow-md p-6 border border-gray-200 max-w-2xl mx-auto my-6 transition-all hover:shadow-xl">
+      {/* Header */}
       <div className="flex items-center gap-4 mb-4">
         {post.user.avatar ? (
           <img
             src={post.user.avatar}
-            className="h-12 w-12 rounded-full object-cover border-2 border-cyan-500"
             alt="User Avatar"
+            className="h-12 w-12 rounded-full object-cover border-2 border-cyan-500"
           />
         ) : (
-          <div className="h-12 w-12 rounded-full bg-gray-300 flex items-center justify-center text-gray-700 font-semibold text-lg border-2 border-cyan-500">
+          <div className="h-12 w-12 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-700 font-bold text-lg border-2 border-cyan-500">
             {post.user.username[0].toUpperCase()}
           </div>
         )}
         <div>
           <Link
             to={`/profile/${post.user._id}`}
-            className="text-md font-semibold text-cyan-700 hover:underline"
+            className="text-lg font-semibold text-cyan-700 hover:underline"
           >
             {post.user.username}
           </Link>
@@ -135,102 +135,115 @@ const PostCard = ({ post }) => {
         </div>
       </div>
 
-      {/* Post Images */}
-      {post.images?.length > 0 && (
-        <div className="mb-3 rounded-xl overflow-hidden">
-          {post.images.length === 1 ? (
-            <img
-              src={post.images[0]}
-              alt="Post"
-              className="rounded-xl w-full object-contain max-h-[400px] mx-auto bg-black"
-            />
-          ) : (
-            <Slider {...sliderSettings}>
-              {post.images.map((img, idx) => (
-                <div
-                  key={idx}
-                  className="flex justify-center items-center h-[400px] bg-black"
-                >
-                  <img
-                    src={img}
-                    alt={`Post ${idx + 1}`}
-                    className="object-contain max-h-full max-w-full mx-auto"
-                  />
-                </div>
-              ))}
-            </Slider>
-          )}
-        </div>
-      )}
+      {/* Post Content */}
+      <div className="space-y-4">
+        {/* Post Text */}
+        <p className="text-gray-800 text-base">{post.text}</p>
 
-      {/* Text Content */}
-      <p className="text-sm text-gray-800 mb-3">{post.text}</p>
+        {/* Images */}
+        {post.images?.length > 0 && (
+          <div className="rounded-xl overflow-hidden">
+            {post.images.length === 1 ? (
+              <img
+                src={post.images[0]}
+                alt="Post"
+                className="w-full max-h-[400px] object-cover rounded-xl"
+              />
+            ) : (
+              <Slider {...sliderSettings}>
+                {post.images.map((img, idx) => (
+                  <div
+                    key={idx}
+                    className="h-[400px] flex justify-center items-center bg-gray-100"
+                  >
+                    <img
+                      src={img}
+                      alt={`Post ${idx}`}
+                      className="max-h-full max-w-full rounded-xl"
+                    />
+                  </div>
+                ))}
+              </Slider>
+            )}
+          </div>
+        )}
 
-      {/* Tags */}
-      {post.tags?.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-2">
-          {post.tags.map((tag, idx) => (
-            <span
-              key={idx}
-              className="text-xs bg-cyan-100 text-cyan-800 px-2 py-1 rounded-full"
-            >
-              #{tag}
-            </span>
-          ))}
-        </div>
-      )}
+        {/* Tags */}
+        {post.tags?.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {post.tags.map((tag, i) => (
+              <span
+                key={i}
+                className="text-xs bg-cyan-100 text-cyan-800 px-2 py-1 rounded-full font-medium"
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
 
-      {/* Like & Comment Counts */}
-      <div className="flex justify-start items-center gap-8 mt-5 pt-3 border-t border-gray-100 text-sm">
+      {/* Reactions */}
+      <div className="flex justify-between items-center mt-6 border-t pt-4 border-gray-100 text-sm">
         <button
           onClick={toggleLike}
           className="flex items-center gap-2 text-gray-600 hover:text-red-500 transition"
         >
           {liked ? (
-            <FaHeart className="text-red-500 text-2xl" />
+            <FaHeart className="text-red-500 text-xl" />
           ) : (
-            <FaRegHeart className="text-2xl" />
+            <FaRegHeart className="text-xl" />
           )}
-          <span className="text-lg">{likeCount}</span>
+          <span>{likeCount}</span>
         </button>
 
-        <div className="flex items-center gap-2 text-gray-600 text-xl">
-          <FaCommentDots className="text-blue-500 text-2xl" />
-          <span className="text-lg">{comments.length}</span>
+        <div className="flex items-center gap-2 text-gray-600">
+          <FaCommentDots className="text-blue-500 text-xl" />
+          <span>{comments.length}</span>
         </div>
       </div>
-      <div className="mt-3 space-y-2">
-        {comments.slice(-3).map((comment, index) => (
-          <p
-            key={index}
-            className="text-sm text-gray-700 border-l-2 pl-2 border-cyan-400"
+
+      {/* Comments */}
+      <div className="mt-4 space-y-2">
+        {comments.slice(-3).map((comment, i) => (
+          <div
+            key={i}
+            className="bg-gray-50 px-3 py-2 rounded-lg border border-gray-100"
           >
-            <span className="font-semibold">@{comment.user?.username}:</span>{" "}
-            {comment.text}
-          </p>
+            <p className="text-sm text-gray-700">
+              <span className="font-semibold text-cyan-700">
+                @{comment.user?.username}:
+              </span>{" "}
+              {comment.text}
+            </p>
+          </div>
         ))}
       </div>
 
-      {/* Comment Input */}
+      {/* Add Comment */}
       <form
         onSubmit={handleCommentSubmit}
-        className="flex items-center gap-2 mt-4"
+        className="flex items-center gap-3 mt-4"
       >
         <input
           value={commentText}
           onChange={(e) => setCommentText(e.target.value)}
           placeholder="Write a comment..."
-          className="flex-1 px-3 py-1 border border-gray-300 rounded-lg text-sm"
+          className="flex-1 px-4 py-2 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
         />
         <button
           type="submit"
           disabled={commentLoading}
-          className="bg-cyan-600 text-white px-4 py-1 rounded hover:bg-cyan-700"
+          className="bg-cyan-600 text-white px-4 py-2 rounded-full text-sm hover:bg-cyan-700 transition"
         >
           {commentLoading ? "Posting..." : "Post"}
         </button>
       </form>
-      {commentError && <p className="text-red-500 mt-2">{commentError}</p>}
+
+      {/* Error Message */}
+      {commentError && (
+        <p className="text-red-500 text-sm mt-2">{commentError}</p>
+      )}
     </div>
   );
 };

@@ -18,11 +18,14 @@ const ViewProfile = () => {
 
   const fetchUser = async () => {
     try {
-      const res = await axios.get(`/api/users/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await axios.get(
+        `https://kinnectbackend.onrender.com/api/users/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       setUser(res.data.user);
     } catch (err) {
       setError(
@@ -33,11 +36,14 @@ const ViewProfile = () => {
 
   const fetchUserPosts = async () => {
     try {
-      const res = await axios.get(`/api/posts/user/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await axios.get(
+        `https://kinnectbackend.onrender.com/api/posts/user/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       setPosts(res.data || []);
     } catch (err) {
       console.error("❌ Failed to load posts", err);
@@ -46,9 +52,12 @@ const ViewProfile = () => {
 
   const checkFollowing = async () => {
     try {
-      const res = await axios.get(`/api/follows/${id}/stats`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get(
+        `https://kinnectbackend.onrender.com/api/follows/${id}/stats`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       const myId = JSON.parse(atob(token.split(".")[1])).id;
       const isUserFollowing = res.data.followers.some((f) => f._id === myId);
@@ -91,7 +100,7 @@ const ViewProfile = () => {
   const handleLikeToggle = async (postId) => {
     try {
       const res = await axios.post(
-        `/api/likes/${postId}/toggle`,
+        `https://kinnectbackend.onrender.com/api/likes/${postId}/toggle`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -114,7 +123,9 @@ const ViewProfile = () => {
     try {
       setLoading(true);
       await axios.post(
-        `/api/follows/${id}/${isFollowing ? "unfollow" : "follow"}`,
+        `https://kinnectbackend.onrender.com/api/follows/${id}/${
+          isFollowing ? "unfollow" : "follow"
+        }`,
         {},
         {
           headers: {
