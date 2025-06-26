@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { MdCampaign } from "react-icons/md";
 import PostCard from "../components/PostCard";
 import { useAuth } from "../contexts/AuthContexts";
-import KinnectLoader from "../components/KinnectLoader"; // ⬅️ Import here
+import KinnectLoader from "../components/KinnectLoader";
 import axios from "axios";
 
 const Home = () => {
@@ -52,7 +53,29 @@ const Home = () => {
 
         {error && <p className="text-red-500">{error}</p>}
 
-        {posts.length === 0 ? (
+        {!user ? (
+          <div className="text-center mt-10">
+            <p className="text-gray-600 mb-4">
+              Please <span className="font-semibold text-cyan-700">log in</span>{" "}
+              or <span className="font-semibold text-cyan-700">register</span>{" "}
+              to see posts.
+            </p>
+            <div className="flex justify-center gap-4">
+              <Link
+                to="/login"
+                className="bg-cyan-600 text-white px-4 py-2 rounded hover:bg-cyan-700 transition"
+              >
+                Login
+              </Link>
+              <Link
+                to="/register"
+                className="bg-gray-100 text-gray-700 px-4 py-2 rounded hover:bg-gray-200 transition"
+              >
+                Register
+              </Link>
+            </div>
+          </div>
+        ) : posts.length === 0 ? (
           <p className="text-gray-500">No posts yet.</p>
         ) : (
           posts.map((post, i) => <PostCard key={i} post={post} />)

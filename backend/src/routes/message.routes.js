@@ -20,4 +20,14 @@ router.get("/:user1/:user2", async (req, res) => {
   }
 });
 
+router.get("/:id/status", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select("isOnline lastSeen");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json({ isOnline: user.isOnline, lastSeen: user.lastSeen });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
 module.exports = router;

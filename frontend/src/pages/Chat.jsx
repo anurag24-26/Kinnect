@@ -89,31 +89,67 @@ const Chat = () => {
   };
 
   return (
-    <div style={{ display: "flex", height: "90vh" }}>
-      {/* Sidebar: Following list */}
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        flexWrap: "wrap",
+        height: "100vh",
+        fontFamily: "'Segoe UI', sans-serif",
+        backgroundColor: "#f0f2f5",
+      }}
+    >
+      <style>
+        {`
+          @media (max-width: 768px) {
+            .sidebar {
+              width: 100% !important;
+              border-right: none !important;
+              border-bottom: 1px solid #ccc;
+            }
+            .chat-section {
+              width: 100% !important;
+            }
+          }
+        `}
+      </style>
+
+      {/* Sidebar */}
       <div
+        className="sidebar"
         style={{
           width: "30%",
+          background: "linear-gradient(to bottom, #e0f7fa, #ffffff)",
           borderRight: "1px solid #ccc",
           padding: "1rem",
           overflowY: "auto",
+          transition: "0.3s ease",
         }}
       >
-        <h3>Following</h3>
+        <h3 style={{ color: "#006064", marginBottom: "1rem" }}>🧑‍🤝‍🧑 Following</h3>
         {accounts.length === 0 ? (
-          <p className="text-gray-500 text-sm">You're not following anyone.</p>
+          <p style={{ color: "#777", fontSize: "0.9rem" }}>
+            You're not following anyone yet.
+          </p>
         ) : (
-          <ul style={{ listStyle: "none", padding: 0 }}>
+          <ul style={{ padding: 0, listStyleType: "none" }}>
             {accounts.map((acc) => (
               <li
                 key={acc.id}
                 onClick={() => handleAccountClick(acc)}
                 style={{
-                  padding: "0.5rem",
-                  borderBottom: "1px solid #eee",
-                  cursor: "pointer",
+                  padding: "0.6rem 0.9rem",
+                  marginBottom: "0.6rem",
+                  borderRadius: "10px",
                   backgroundColor:
-                    selectedAccount?.id === acc.id ? "#f0f0f0" : "transparent",
+                    selectedAccount?.id === acc.id ? "#b2ebf2" : "#ffffff",
+                  color: "#004d40",
+                  cursor: "pointer",
+                  border:
+                    selectedAccount?.id === acc.id
+                      ? "2px solid #00acc1"
+                      : "1px solid #e0e0e0",
+                  transition: "background-color 0.2s ease",
                 }}
               >
                 {acc.name}
@@ -123,72 +159,103 @@ const Chat = () => {
         )}
       </div>
 
-      {/* Chat area */}
+      {/* Chat Section */}
       <div
+        className="chat-section"
         style={{
           width: "70%",
           display: "flex",
           flexDirection: "column",
           padding: "1rem",
+          backgroundColor: "#ffffff",
         }}
       >
-        <h3>
+        <div
+          style={{
+            marginBottom: "1rem",
+            paddingBottom: "0.5rem",
+            borderBottom: "2px solid #00acc1",
+            color: "#00796b",
+            fontSize: "1.1rem",
+            fontWeight: "bold",
+          }}
+        >
           {selectedAccount
             ? `Chat with ${selectedAccount.name}`
-            : "Select someone to chat with"}
-        </h3>
+            : "💬 Choose someone to start chatting"}
+        </div>
+
         <div
           style={{
             flex: 1,
             overflowY: "auto",
-            border: "1px solid #ccc",
             padding: "1rem",
-            marginBottom: "1rem",
+            backgroundColor: "#f5f5f5",
+            borderRadius: "10px",
           }}
         >
           {selectedAccount ? (
-            chat.map((msg, index) => (
+            chat.map((msg, idx) => (
               <div
-                key={index}
+                key={idx}
                 style={{
-                  textAlign: msg.senderId === currentUserId ? "right" : "left",
-                  marginBottom: "0.5rem",
+                  display: "flex",
+                  justifyContent:
+                    msg.senderId === currentUserId ? "flex-end" : "flex-start",
+                  marginBottom: "0.75rem",
                 }}
               >
-                <span
+                <div
                   style={{
-                    display: "inline-block",
-                    padding: "0.5rem 1rem",
-                    borderRadius: "15px",
+                    padding: "0.8rem 1rem",
+                    maxWidth: "75%",
                     backgroundColor:
-                      msg.senderId === currentUserId ? "#DCF8C6" : "#FFF",
+                      msg.senderId === currentUserId ? "#c8e6c9" : "#ffffff",
                     border: "1px solid #ccc",
+                    borderRadius: "16px",
+                    fontSize: "0.95rem",
+                    color: "#333",
+                    boxShadow: "0px 1px 4px rgba(0,0,0,0.1)",
                   }}
                 >
                   {msg.message}
-                </span>
+                </div>
               </div>
             ))
           ) : (
-            <p className="text-sm text-gray-500">No conversation selected.</p>
+            <p style={{ color: "#777" }}>No messages yet</p>
           )}
         </div>
 
         {selectedAccount && (
-          <div style={{ display: "flex" }}>
+          <div style={{ display: "flex", marginTop: "1rem" }}>
             <input
               type="text"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Type a message..."
-              style={{ flex: 1, padding: "0.5rem" }}
-              onKeyPress={(e) =>
-                e.key === "Enter" ? handleSendMessage() : null
-              }
+              style={{
+                flex: 1,
+                padding: "0.75rem 1rem",
+                borderRadius: "20px",
+                border: "1px solid #ccc",
+                fontSize: "0.95rem",
+                outline: "none",
+              }}
+              onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
             />
             <button
               onClick={handleSendMessage}
-              style={{ padding: "0.5rem 1rem", marginLeft: "0.5rem" }}
+              style={{
+                marginLeft: "0.75rem",
+                padding: "0.6rem 1.2rem",
+                backgroundColor: "#00796b",
+                color: "#fff",
+                border: "none",
+                borderRadius: "20px",
+                fontWeight: "bold",
+                cursor: "pointer",
+              }}
             >
               Send
             </button>

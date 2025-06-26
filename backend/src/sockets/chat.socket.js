@@ -1,39 +1,63 @@
-// sockets/chat.socket.js
 const Message = require("../models/message.model");
+const User = require("../models/User"); // for online/last seen tracking
 
 const chatSocketHandler = (io, socket) => {
-  // Join personal room (based on userId)
-  socket.on("join", (userId) => {
+  // Join personal room
+  socket.on("join", async (userId) => {
+    socket.userId = userId;
     socket.join(userId);
-    console.log(`User ${userId} joined their chat room`);
+    console.log(`✅ User ${userId} joined their personal room`);
+
+    // Mark user online
+    try {
+      await User.findByIdAndUpdate(userId, { isOnline: true });
+      socket.broadcast.emit("userOnline", userId); // broadcast to others
+    } catch (err) {
+      console.error("⚠️ Error updating online status:", err.message);
+    }
   });
 
-  // Send Message
-  socket.on("sendMessage", async (data) => {
-    const { senderId, receiverId, message } = data;
-
+  // Send message
+  socket.on("sendMessage", async ({ senderId, receiverId, message }) => {
     try {
-      // Save message to DB
       const newMessage = await Message.create({
         senderId,
         receiverId,
         message,
       });
 
-      // Emit to receiver's room
+      // Send to receiver if online
       io.to(receiverId).emit("receiveMessage", newMessage);
 
-      // Emit to sender (to confirm or update)
+      // Confirm to sender
       socket.emit("receiveMessage", newMessage);
     } catch (err) {
-      console.error("❌ Error saving message:", err);
-      socket.emit("error", { message: "Failed to send message" });
+      console.error("❌ Message DB error:", err.message);
+      socket.emit("error", { message: "Message failed" });
     }
   });
 
-  // Optional: Typing indicator
+  // Typing indicator (optional)
   socket.on("typing", ({ senderId, receiverId }) => {
     io.to(receiverId).emit("typing", { senderId });
+  });
+
+  // On disconnect, update last seen
+  socket.on("disconnect", async () => {
+    const userId = socket.userId;
+    if (!userId) return;
+
+    try {
+      await User.findByIdAndUpdate(userId, {
+        isOnline: false,
+        lastSeen: new Date(),
+      });
+
+      socket.broadcast.emit("userOffline", userId);
+      console.log(`🔌 User ${userId} disconnected`);
+    } catch (err) {
+      console.error("⚠️ Disconnect update failed:", err.message);
+    }
   });
 };
 
