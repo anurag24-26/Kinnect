@@ -191,7 +191,7 @@ const Profile = () => {
                 {user.username}
               </h2>
               <p className="text-sm text-gray-500">{user.email}</p>
-
+              <p className="text-sm text-gray-500">{user.bio}</p>
               <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-3 text-sm">
                 <span className="bg-cyan-100 text-cyan-800 px-3 py-1 rounded-full font-medium">
                   Posts: {posts.length}

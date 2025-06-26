@@ -1,27 +1,17 @@
-const socketIO = require("socket.io");
+// src/sockets/index.js
+
+const { Server } = require("socket.io");
 const registerChatHandlers = require("./chat.socket");
-const registerNotificationHandlers = require("./notification.socket");
 
-let io;
-
-const initSocket = (server) => {
-  io = socketIO(server, {
+function initSocket(server) {
+  const io = new Server(server, {
     cors: {
-      origin: "*", // Adjust to frontend URL in production
+      origin: "*", // match your frontend
       methods: ["GET", "POST"],
     },
   });
 
-  io.on("connection", (socket) => {
-    console.log("🔗 New socket connected:", socket.id);
+  registerChatHandlers(io);
+}
 
-    registerChatHandlers(io, socket);
-    registerNotificationHandlers(io, socket);
-
-    socket.on("disconnect", () => {
-      console.log("❌ Disconnected:", socket.id);
-    });
-  });
-};
-
-module.exports = { initSocket, getIO: () => io };
+module.exports = { initSocket };
