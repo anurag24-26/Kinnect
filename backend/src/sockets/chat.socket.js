@@ -1,5 +1,5 @@
 const Message = require("../models/message.model");
-const User = require("../models/User"); // for online/last seen tracking
+const User = require("../models/user.model"); // for online/last seen tracking
 
 const chatSocketHandler = (io, socket) => {
   // Join personal room

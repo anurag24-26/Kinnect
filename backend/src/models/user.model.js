@@ -6,6 +6,15 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   avatar: { type: String, default: "" },
   bio: { type: String, default: "" },
+  lastSeen: {
+    type: Date,
+    default: null,
+  },
+  isOnline: {
+    type: Boolean,
+    default: false,
+  },
+
   createdAt: { type: Date, default: Date.now },
 });
 
