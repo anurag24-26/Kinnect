@@ -1,17 +1,27 @@
-// src/sockets/index.js
-
+// sockets/index.js
 const { Server } = require("socket.io");
-const registerChatHandlers = require("./chat.socket");
+const chatSocketHandler = require("./chat.socket");
 
-function initSocket(server) {
-  const io = new Server(server, {
+let io;
+
+const initSocket = (server) => {
+  io = new Server(server, {
     cors: {
-      origin: "*", // match your frontend
+      origin: "*", // Update with frontend origin if needed
       methods: ["GET", "POST"],
     },
   });
 
-  registerChatHandlers(io);
-}
+  io.on("connection", (socket) => {
+    console.log("✅ A user connected:", socket.id);
+
+    // Register all socket event handlers
+    chatSocketHandler(io, socket);
+
+    socket.on("disconnect", () => {
+      console.log("❌ A user disconnected:", socket.id);
+    });
+  });
+};
 
 module.exports = { initSocket };

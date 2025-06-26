@@ -1,36 +1,40 @@
-// src/sockets/chat.socket.js
+// sockets/chat.socket.js
+const Message = require("../models/message.model");
 
-const onlineUsers = new Map();
-
-function registerChatHandlers(io) {
-  io.on("connection", (socket) => {
-    console.log("User connected:", socket.id);
-
-    socket.on("join", (userId) => {
-      console.log(`User ${userId} joined`);
-      onlineUsers.set(userId, socket.id);
-    });
-
-    socket.on("sendMessage", ({ senderId, receiverId, message }) => {
-      const receiverSocketId = onlineUsers.get(receiverId);
-      if (receiverSocketId) {
-        io.to(receiverSocketId).emit("receiveMessage", {
-          senderId,
-          message,
-        });
-      }
-    });
-
-    socket.on("disconnect", () => {
-      console.log("User disconnected:", socket.id);
-      for (let [userId, sockId] of onlineUsers.entries()) {
-        if (sockId === socket.id) {
-          onlineUsers.delete(userId);
-          break;
-        }
-      }
-    });
+const chatSocketHandler = (io, socket) => {
+  // Join personal room (based on userId)
+  socket.on("join", (userId) => {
+    socket.join(userId);
+    console.log(`User ${userId} joined their chat room`);
   });
-}
 
-module.exports = registerChatHandlers;
+  // Send Message
+  socket.on("sendMessage", async (data) => {
+    const { senderId, receiverId, message } = data;
+
+    try {
+      // Save message to DB
+      const newMessage = await Message.create({
+        senderId,
+        receiverId,
+        message,
+      });
+
+      // Emit to receiver's room
+      io.to(receiverId).emit("receiveMessage", newMessage);
+
+      // Emit to sender (to confirm or update)
+      socket.emit("receiveMessage", newMessage);
+    } catch (err) {
+      console.error("❌ Error saving message:", err);
+      socket.emit("error", { message: "Failed to send message" });
+    }
+  });
+
+  // Optional: Typing indicator
+  socket.on("typing", ({ senderId, receiverId }) => {
+    io.to(receiverId).emit("typing", { senderId });
+  });
+};
+
+module.exports = chatSocketHandler;

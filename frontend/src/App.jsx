@@ -10,7 +10,7 @@ import CreatePost from "./pages/CreatePost";
 import ViewProfile from "./pages/ViewProfile";
 import KinnectLoader from "./components/KinnectLoader";
 import SearchPage from "./pages/SearchPage";
-
+import Chat from "./pages/Chat";
 const App = () => {
   const { loading } = useAuth();
 
@@ -29,6 +29,7 @@ const App = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/create" element={<CreatePost />} />
         <Route path="/profile/:id" element={<ViewProfile />} />
+        <Route path="/chat" element={<Chat />} />
         <Route path="/:query" element={<SearchPage />} />;
       </Route>
       <Route path="/login" element={<Login />} />
