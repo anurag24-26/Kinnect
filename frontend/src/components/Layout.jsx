@@ -5,8 +5,14 @@ import {
   AiOutlineSearch,
   AiOutlinePlusCircle,
 } from "react-icons/ai";
-import { FaUserCircle, FaCog, FaSignInAlt, FaSignOutAlt } from "react-icons/fa";
+import {
+  FaUserCircle,
+  FaCog,
+  FaSignInAlt,
+  FaSignOutAlt,
+} from "react-icons/fa";
 import { BiMessageDetail } from "react-icons/bi";
+import { HiMenuAlt3, HiX } from "react-icons/hi";
 import { useAuth } from "../contexts/AuthContexts";
 import NotificationBell from "./NotificationBell";
 
@@ -14,6 +20,7 @@ const Layout = () => {
   const { user, logout, loading } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -25,6 +32,7 @@ const Layout = () => {
     if (searchQuery.trim()) {
       navigate(`/${searchQuery.trim()}`);
       setSearchQuery("");
+      setMobileMenuOpen(false);
     }
   };
 
@@ -37,16 +45,19 @@ const Layout = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-white text-gray-800">
       {/* Navbar */}
-      <header className="w-full bg-white shadow-sm border-b border-gray-200 fixed top-0 left-0 right-0 z-40">
-        <nav className="flex justify-between items-center px-4 md:px-6 py-3 max-w-7xl mx-auto">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b shadow-sm">
+        <div className="max-w-7xl mx-auto flex justify-between items-center px-4 py-3 md:px-6">
           {/* Logo */}
-          <Link to="/" className="text-3xl font-bold text-cyan-700">
+          <Link
+            to="/"
+            className="text-2xl font-extrabold tracking-tight text-cyan-700"
+          >
             Kinnect
           </Link>
 
-          {/* Search Bar */}
+          {/* Desktop Search */}
           <form
             onSubmit={handleSearchSubmit}
             className="hidden md:flex items-center gap-2"
@@ -56,97 +67,134 @@ const Layout = () => {
               placeholder="Search username..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="px-3 py-1.5 border rounded-md text-sm focus:ring-2 focus:ring-cyan-400 focus:outline-none"
+              className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-cyan-400 focus:outline-none"
             />
             <button
               type="submit"
               className="bg-cyan-600 hover:bg-cyan-700 text-white px-3 py-1.5 rounded text-sm flex items-center gap-1"
             >
-              <AiOutlineSearch /> Search
+              <AiOutlineSearch />
+              Search
             </button>
           </form>
 
-          {/* Icons & Links */}
-          <div className="flex items-center gap-5 text-gray-700 text-sm font-medium">
-            <Link
-              to="/"
-              className="flex items-center gap-1 hover:text-cyan-600"
-              title="Explore"
-            >
+          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center gap-6 text-sm font-medium">
+            <Link to="/" className="hover:text-cyan-600 flex items-center gap-1">
               <AiFillHome className="text-lg" />
-              <span className="hidden md:inline">Explore</span>
+              Explore
             </Link>
 
-            {user && (
+            {user ? (
               <>
-                {/* <Link
-                  to="/create"
-                  className="flex items-center gap-1 hover:text-cyan-600"
-                  title="Create Post"
-                >
-                  <AiOutlinePlusCircle className="text-lg" />
-                  <span className="hidden md:inline">Create</span>
-                </Link> */}
-
-                <Link
-                  to="/chat"
-                  className="flex items-center gap-1 hover:text-cyan-600"
-                  title="Chat"
-                >
+                <Link to="/chat" className="hover:text-cyan-600 flex items-center gap-1">
                   <BiMessageDetail className="text-lg" />
-                  <span className="hidden md:inline">Chat</span>
+                  Chat
                 </Link>
 
                 <NotificationBell />
 
-                <Link
-                  to="/settings"
-                  className="flex items-center gap-1 hover:text-cyan-600"
-                  title="Settings"
-                >
+                <Link to="/settings" className="hover:text-cyan-600">
                   <FaCog className="text-lg" />
                 </Link>
 
-                <Link
-                  to="/profile"
-                  className="flex items-center gap-1 hover:text-cyan-600"
-                  title="Your Profile"
-                >
+                <Link to="/profile" className="hover:text-cyan-600 flex items-center gap-1">
                   <FaUserCircle className="text-lg" />
-                  <span className="hidden md:inline">{user.username}</span>
+                  {user.username}
                 </Link>
 
-                {/* <button
+                <button
                   onClick={handleLogout}
-                  className="flex items-center gap-1 text-red-600 hover:text-red-700"
-                  title="Logout"
+                  className="text-red-600 hover:text-red-700 flex items-center gap-1"
                 >
                   <FaSignOutAlt className="text-lg" />
-                  <span className="hidden md:inline">Logout</span>
-                </button> */}
+                  Logout
+                </button>
               </>
-            )}
-
-            {!user && (
-              <Link
-                to="/login"
-                className="flex items-center gap-1 hover:text-cyan-600"
-                title="Login"
-              >
+            ) : (
+              <Link to="/login" className="hover:text-cyan-600 flex items-center gap-1">
                 <FaSignInAlt className="text-lg" />
-                <span className="hidden md:inline">Login</span>
+                Login
               </Link>
             )}
           </div>
-        </nav>
+
+          {/* Mobile menu toggle */}
+          <button
+            className="md:hidden text-2xl text-cyan-700"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? <HiX /> : <HiMenuAlt3 />}
+          </button>
+        </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-white border-t px-4 py-4 flex flex-col gap-4 text-sm">
+            <form onSubmit={handleSearchSubmit} className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Search username..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-3 py-1.5 border rounded-md text-sm"
+              />
+              <button
+                type="submit"
+                className="bg-cyan-600 text-white px-3 py-1.5 rounded"
+              >
+                <AiOutlineSearch />
+              </button>
+            </form>
+
+            <Link to="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2">
+              <AiFillHome />
+              Explore
+            </Link>
+            {user ? (
+              <>
+                <Link to="/chat" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2">
+                  <BiMessageDetail />
+                  Chat
+                </Link>
+
+                <Link to="/settings" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2">
+                  <FaCog />
+                  Settings
+                </Link>
+
+                <Link to="/profile" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2">
+                  <FaUserCircle />
+                  {user.username}
+                </Link>
+
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2 text-red-600"
+                >
+                  <FaSignOutAlt />
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2">
+                <FaSignInAlt />
+                Login
+              </Link>
+            )}
+          </div>
+        )}
       </header>
 
-      {/* Page Content */}
+      {/* Main Content */}
       <main className="pt-20 px-4 pb-32 max-w-7xl mx-auto w-full">
         <Outlet />
       </main>
 
-      {/* Floating Post Button */}
+      {/* Floating Create Button */}
       {user && (
         <Link
           to="/create"

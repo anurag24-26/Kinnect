@@ -140,106 +140,111 @@ const Chat = () => {
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gradient-to-br from-cyan-100 to-white font-sans">
-      {/* Sidebar */}
-      <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r border-gray-300 p-4 overflow-y-auto bg-white shadow-md">
-        <h3 className="text-xl font-bold text-gray-700 mb-4">Chats</h3>
-        {accounts.length === 0 ? (
-          <p className="text-sm text-gray-500">
-            Follow someone to start chatting.
-          </p>
-        ) : (
-          <ul className="space-y-2">
-            {accounts.map((acc) => (
-              <li
-                key={acc.id}
-                onClick={() => handleAccountClick(acc)}
-                className={`flex items-center justify-between px-4 py-2 rounded-md border cursor-pointer transition-all duration-200 ${
-                  selectedAccount?.id === acc.id
-                    ? "bg-cyan-100 border-cyan-500"
-                    : "bg-white border-gray-200 hover:bg-cyan-50"
-                }`}
-              >
-                <span className="text-sm font-medium text-gray-800 flex items-center gap-2">
-                  {acc.name}
-                  {unreadMessages[acc.id] && (
-                    <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-                      {unreadMessages[acc.id]}
-                    </span>
-                  )}
-                </span>
-                <FaCircle
-                  className={`text-xs ${
-                    isUserOnline(acc.id) ? "text-green-500" : "text-gray-400"
-                  }`}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
 
-      {/* Chat Section */}
-      <div className="w-full md:w-2/3 flex flex-col bg-white relative">
-        <div className="p-4 border-b">
-          <h4 className="text-lg font-semibold text-gray-700">
-            {selectedAccount
-              ? `Chat with ${selectedAccount.name}`
-              : "Select a user to start chatting"}
-          </h4>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-4 py-3 bg-gray-100 space-y-3">
-          {chat.map((msg, i) => (
-            <div
-              key={i}
-              className={`flex ${
-                msg.senderId === currentUserId ? "justify-end" : "justify-start"
+  {/* Sidebar */}
+  <aside className="w-full md:w-1/3 md:max-w-xs h-[320px] md:h-full border-b md:border-b-0 md:border-r border-cyan-200 bg-white shadow-lg z-20 p-6 pt-8 overflow-x-hidden overflow-y-auto transition-all flex-shrink-0">
+    <h3 className="text-2xl font-extrabold mb-6 text-cyan-900">Chats</h3>
+    {accounts.length === 0 ? (
+      <p className="text-base text-gray-400 py-12 text-center">
+        Follow someone to start chatting.
+      </p>
+    ) : (
+      <ul className="space-y-3">
+        {accounts.map(acc => (
+          <li
+            key={acc.id}
+            onClick={() => handleAccountClick(acc)}
+            className={`group flex items-center justify-between gap-2 px-5 py-3 rounded-xl border-2 cursor-pointer select-none
+              transition
+              ${selectedAccount?.id === acc.id
+                ? "bg-cyan-100 border-cyan-600 shadow-md"
+                : "bg-white border-transparent hover:bg-cyan-50 hover:border-cyan-300"
               }`}
-            >
-              <div
-                className={`px-4 py-2 max-w-[75%] text-sm border shadow-sm ${
-                  msg.senderId === currentUserId
-                    ? "bg-green-100 border-green-300 rounded-tl-xl rounded-tr-xl rounded-bl-xl"
-                    : "bg-white border-gray-300 rounded-tr-xl rounded-br-xl rounded-bl-xl"
-                }`}
-              >
-                {msg.message}
-              </div>
-            </div>
-          ))}
+          >
+            <span className="flex items-center gap-3 text-base font-medium text-gray-900">
+              <span className="h-9 w-9 flex items-center justify-center rounded-full bg-cyan-50 text-cyan-700 font-bold text-lg capitalize shadow-sm">
+                {acc.avatar 
+                  ? <img src={acc.avatar} alt={acc.name} className="rounded-full max-w-full max-h-full" />
+                  : acc.name.charAt(0)}
+              </span>
+              {acc.name}
+              {unreadMessages[acc.id] &&
+                <span className="ml-1 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                  {unreadMessages[acc.id]}
+                </span>
+              }
+            </span>
+            <FaCircle
+              className={`text-xs ${isUserOnline(acc.id) ? "text-green-500" : "text-gray-300"}`}
+            />
+          </li>
+        ))}
+      </ul>
+    )}
+  </aside>
 
-          {typingUsers[selectedAccount?.id] && (
-            <p className="text-sm text-gray-500 italic">Typing...</p>
-          )}
-
-          <div ref={bottomRef} />
-        </div>
-
-        {selectedAccount && (
-          <div className="sticky bottom-0 bg-white px-4 py-3 border-t shadow-sm">
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={message}
-                onChange={(e) => {
-                  setMessage(e.target.value);
-                  handleTyping();
-                }}
-                onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                placeholder="Type your message..."
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
-              />
-              <button
-                onClick={handleSendMessage}
-                className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-full font-medium transition"
-              >
-                Send
-              </button>
+  {/* Chat Area */}
+  <main className="flex-1 flex flex-col h-full bg-white shadow-md">
+    {/* Header */}
+    <header className="p-6 border-b border-cyan-100 bg-cyan-50 shadow-inner">
+      <h4 className="text-xl font-bold text-cyan-800 tracking-tight">
+        {selectedAccount
+          ? `Chat with ${selectedAccount.name}`
+          : "Select a user to start chatting"}
+      </h4>
+    </header>
+    
+    {/* Chat Messages Scroll Area */}
+    <section className="flex-1 min-h-0 overflow-y-auto px-4 py-6 bg-gray-50 space-y-4">
+      {chat.map((msg, i) => {
+        const isSender = msg.senderId === currentUserId;
+        return (
+          <div key={i} className={`flex ${isSender ? "justify-end" : "justify-start"}`}>
+            <div className={`
+              px-5 py-3 max-w-lg text-base shadow
+              ${isSender
+                ? "bg-cyan-500 text-white rounded-tl-2xl rounded-b-2xl rounded-tr-md"
+                : "bg-white border border-cyan-100 text-cyan-800 rounded-tr-2xl rounded-b-2xl rounded-tl-md"
+              }
+            `}>
+              {msg.message}
             </div>
           </div>
-        )}
-      </div>
-    </div>
+        )
+      })}
+      {typingUsers[selectedAccount?.id] && (
+        <div className="text-sm italic text-cyan-400 animate-pulse">Typing...</div>
+      )}
+      <div ref={bottomRef} />
+    </section>
+    
+    {/* Input Box */}
+    {selectedAccount && (
+      <footer className="bg-white px-6 py-4 border-t border-cyan-100 shadow relative">
+        <div className="flex items-center gap-3">
+          <input
+            type="text"
+            value={message}
+            onChange={e => {
+              setMessage(e.target.value);
+              handleTyping();
+            }}
+            onKeyDown={e => e.key === "Enter" && handleSendMessage()}
+            placeholder="Type your message..."
+            className="flex-1 px-5 py-2 border border-cyan-200 rounded-full text-base focus:outline-none focus:ring-2 focus:ring-cyan-400 placeholder:text-cyan-300 transition"
+          />
+          <button
+            onClick={handleSendMessage}
+            className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-2 rounded-full font-semibold shadow transition"
+          >
+            Send
+          </button>
+        </div>
+      </footer>
+    )}
+  </main>
+</div>
+
   );
 };
 

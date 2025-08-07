@@ -9,14 +9,23 @@ import axios from "axios";
 const Home = () => {
   const [posts, setPosts] = useState([]);
   const [error, setError] = useState("");
+  const [postsLoading, setPostsLoading] = useState(false); // NEW: loading for posts
 
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+
+  // Show loader if either auth or posts are loading
+  const showLoader = authLoading || postsLoading;
 
   const fetchPosts = async () => {
+    setPostsLoading(true);
+    setError("");
     try {
       const token = localStorage.getItem("token");
-      if (!token) return;
-
+      if (!token) {
+        setPosts([]);
+        setPostsLoading(false);
+        return;
+      }
       const res = await axios.get(
         "https://kinnectbackend.onrender.com/api/posts",
         {
@@ -25,22 +34,31 @@ const Home = () => {
           },
         }
       );
-
       setPosts(res.data);
     } catch (err) {
       setError("Failed to load posts");
+      setPosts([]);
       console.error("❌ Post fetch error:", err.response?.data || err.message);
     }
+    setPostsLoading(false);
   };
 
   useEffect(() => {
-    if (!loading && user) {
+    if (!authLoading && user) {
       fetchPosts();
     }
-  }, [loading, user]);
+    if (!authLoading && !user) {
+      setPosts([]); // cleanup posts if logged out
+    }
+  }, [authLoading, user]);
 
-  if (loading) {
-    return <KinnectLoader />;
+  // Show loader *any* time something's loading
+  if (showLoader) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <KinnectLoader />
+      </div>
+    );
   }
 
   return (
@@ -51,14 +69,18 @@ const Home = () => {
           Latest Posts
         </h1>
 
-        {error && <p className="text-red-500">{error}</p>}
+        {error && (
+          <p className="text-red-500 mb-4 border px-4 py-2 bg-red-50 rounded">
+            {error}
+          </p>
+        )}
 
         {!user ? (
-          <div className="text-center mt-10">
+          <div className="text-center mt-16">
             <p className="text-gray-600 mb-4">
-              Please <span className="font-semibold text-cyan-700">log in</span>{" "}
-              or <span className="font-semibold text-cyan-700">register</span>{" "}
-              to see posts.
+              Please{" "}
+              <span className="font-semibold text-cyan-700">log in</span> or{" "}
+              <span className="font-semibold text-cyan-700">register</span> to see posts.
             </p>
             <div className="flex justify-center gap-4">
               <Link
@@ -76,9 +98,13 @@ const Home = () => {
             </div>
           </div>
         ) : posts.length === 0 ? (
-          <p className="text-gray-500">No posts yet.</p>
+          <div className="text-center mt-16 text-gray-500">No posts yet.</div>
         ) : (
-          posts.map((post, i) => <PostCard key={i} post={post} />)
+          <div className="space-y-4">
+            {posts.map((post, i) => (
+              <PostCard key={post._id || i} post={post} />
+            ))}
+          </div>
         )}
       </div>
     </div>
