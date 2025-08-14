@@ -17,11 +17,15 @@ const Profile = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
+  // Fetch posts of logged-in user
   const fetchUserPosts = async () => {
     try {
-      const res = await axios.get("https://kinnectbackend.onrender.com/api/posts", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      const res = await axios.get(
+        "https://kinnectbackend.onrender.com/api/posts",
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
       const userPosts = res.data.filter((post) => post.user._id === user._id);
       setPosts(userPosts);
       userPosts.forEach((p) => fetchComments(p._id));
@@ -30,33 +34,42 @@ const Profile = () => {
     }
   };
 
+  // Fetch comments for each post
   const fetchComments = async (postId) => {
     try {
       const res = await axios.get(
         `https://kinnectbackend.onrender.com/api/comments/${postId}`,
-        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
       );
       setComments((prev) => ({ ...prev, [postId]: res.data }));
     } catch {}
   };
 
+  // Add comment to post
   const handleAddComment = async (postId, text) => {
     if (!text.trim()) return;
     try {
       await axios.post(
         "https://kinnectbackend.onrender.com/api/comments",
         { postId, text },
-        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
       );
       fetchComments(postId);
     } catch {}
   };
 
+  // Fetch followers/following stats
   const fetchFollowStats = async () => {
     try {
       const res = await axios.get(
         `https://kinnectbackend.onrender.com/api/follows/${user._id}/stats`,
-        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
       );
       setFollowers(res.data.followers || []);
       setFollowing(res.data.following || []);
@@ -70,11 +83,13 @@ const Profile = () => {
     }
   }, [user]);
 
+  // Logout
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
+  // Upload avatar only (separate from profile edit)
   const handleAvatarUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -83,8 +98,8 @@ const Profile = () => {
 
     try {
       setUploading(true);
-      await axios.patch(
-        "https://kinnectbackend.onrender.com/api/users/me/avatar",
+      await axios.put(
+        "https://kinnectbackend.onrender.com/api/users/update-avatar",
         formData,
         {
           headers: {
@@ -93,7 +108,13 @@ const Profile = () => {
           },
         }
       );
-      window.location.reload();
+      // Refresh avatar without full reload
+      const me = await axios.get(
+        `https://kinnectbackend.onrender.com/api/users/${user._id}`,
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      );
+      localStorage.setItem("user", JSON.stringify(me.data.user));
+      window.location.reload(); // or update context directly
     } finally {
       setUploading(false);
     }
@@ -124,6 +145,7 @@ const Profile = () => {
                 onClick={() => fileInputRef.current.click()}
                 className="absolute bottom-1 right-1 bg-cyan-600 hover:bg-cyan-700 text-white p-2 rounded-full shadow-md transition"
                 title="Upload Avatar"
+                disabled={uploading}
               >
                 <FaUpload size={14} />
               </button>
@@ -133,14 +155,17 @@ const Profile = () => {
                 accept="image/*"
                 onChange={handleAvatarUpload}
                 hidden
-                disabled={uploading}
               />
             </div>
 
             <div className="text-center sm:text-left space-y-1">
-              <h2 className="text-2xl font-bold tracking-tight text-cyan-300">{user.username}</h2>
+              <h2 className="text-2xl font-bold tracking-tight text-cyan-300">
+                {user.username}
+              </h2>
               <p className="text-sm text-slate-300">{user.email}</p>
-              {user.bio && <p className="text-sm text-slate-400 italic">{user.bio}</p>}
+              {user.bio && (
+                <p className="text-sm text-slate-400 italic">{user.bio}</p>
+              )}
               <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-3 text-sm">
                 <span className="bg-cyan-500/20 text-cyan-300 px-3 py-1 rounded-full font-medium">
                   Posts: {posts.length}
