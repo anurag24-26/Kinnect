@@ -4,6 +4,7 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
+
 const searchRoutes = require("./routes/search.routes");
 const { connectDB } = require("./config");
 const errorHandler = require("./middlewares/error.middleware");
@@ -11,26 +12,26 @@ const limiter = require("./middlewares/rateLimiter.middleware");
 const { initSocket } = require("./sockets");
 const likeRoutes = require("./routes/like.routes");
 
-// Load env vars
 dotenv.config();
 
-// Init app + middleware
 const app = express();
+
+// CORS
 const corsOptions = {
-  origin: "*", // 👈 Allow all origins
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
-
 app.use(cors(corsOptions));
 
-app.use(express.json());
+// Body parsers
+app.use(express.json({ limit: "1mb" })); // Multer handles files, this handles JSON
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan("dev"));
 app.use(limiter);
 
-// Connect DB
+// DB
 connectDB();
 
 // Routes
@@ -41,14 +42,13 @@ app.use("/api/comments", require("./routes/comment.routes"));
 app.use("/api/follows", require("./routes/follow.routes"));
 app.use("/api/notifications", require("./routes/notification.routes"));
 app.use("/api/messages", require("./routes/message.routes"));
-
 app.use("/api/likes", likeRoutes);
 app.use("/api/search", searchRoutes);
 
 // Error handler
 app.use(errorHandler);
 
-// Setup server and socket
+// Server + socket
 const PORT = process.env.PORT || 5000;
 const server = http.createServer(app);
 initSocket(server);
