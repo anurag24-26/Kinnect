@@ -9,11 +9,10 @@ import axios from "axios";
 const Home = () => {
   const [posts, setPosts] = useState([]);
   const [error, setError] = useState("");
-  const [postsLoading, setPostsLoading] = useState(false); // NEW: loading for posts
+  const [postsLoading, setPostsLoading] = useState(false);
 
   const { user, loading: authLoading } = useAuth();
 
-  // Show loader if either auth or posts are loading
   const showLoader = authLoading || postsLoading;
 
   const fetchPosts = async () => {
@@ -36,7 +35,7 @@ const Home = () => {
       );
       setPosts(res.data);
     } catch (err) {
-      setError("Failed to load posts");
+      setError("Something went wrong while loading your feed.");
       setPosts([]);
       console.error("❌ Post fetch error:", err.response?.data || err.message);
     }
@@ -44,63 +43,84 @@ const Home = () => {
   };
 
   useEffect(() => {
-    if (!authLoading && user) {
-      fetchPosts();
-    }
-    if (!authLoading && !user) {
-      setPosts([]); // cleanup posts if logged out
-    }
+    if (!authLoading && user) fetchPosts();
+    if (!authLoading && !user) setPosts([]);
   }, [authLoading, user]);
 
-  // Show loader *any* time something's loading
+  // Loader state
   if (showLoader) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-slate-100">
         <KinnectLoader />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white text-gray-900 p-5">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold flex items-center gap-2 mb-6 border-b pb-2 border-gray-200">
-          <MdCampaign className="text-cyan-600 text-3xl" />
-          Latest Posts
-        </h1>
+        {/* Page Title */}
+        <div className="flex items-center gap-3 mb-6 border-b border-gray-200 pb-3">
+          <MdCampaign className="text-cyan-600 text-3xl animate-pulse" />
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-cyan-700">
+            Community Feed
+          </h1>
+        </div>
 
+        {/* Error Message */}
         {error && (
-          <p className="text-red-500 mb-4 border px-4 py-2 bg-red-50 rounded">
+          <div className="mb-4 p-4 border border-red-300 bg-red-50 rounded-lg text-red-600 text-sm shadow-sm">
             {error}
-          </p>
+          </div>
         )}
 
+        {/* States */}
         {!user ? (
-          <div className="text-center mt-16">
-            <p className="text-gray-600 mb-4">
-              Please{" "}
-              <span className="font-semibold text-cyan-700">log in</span> or{" "}
-              <span className="font-semibold text-cyan-700">register</span> to see posts.
+          // Logged Out State
+          <div className="mt-20 text-center space-y-4">
+            <h2 className="text-xl font-semibold text-gray-800">
+              Welcome to <span className="text-cyan-600">Kinnect</span> ✨
+            </h2>
+            <p className="text-gray-600 max-w-md mx-auto leading-relaxed">
+              Join our vibrant community and start sharing your thoughts, stories,
+              and moments with people around the world.
             </p>
-            <div className="flex justify-center gap-4">
+
+            <div className="flex justify-center gap-4 mt-6">
               <Link
                 to="/login"
-                className="bg-cyan-600 text-white px-4 py-2 rounded hover:bg-cyan-700 transition"
+                className="bg-cyan-600 text-white px-5 py-2 rounded-full shadow-md hover:bg-cyan-700 transition-all"
               >
-                Login
+                Sign In
               </Link>
               <Link
                 to="/register"
-                className="bg-gray-100 text-gray-700 px-4 py-2 rounded hover:bg-gray-200 transition"
+                className="bg-white border border-gray-300 text-gray-700 px-5 py-2 rounded-full shadow-sm hover:bg-gray-100 transition-all"
               >
-                Register
+                Create Account
               </Link>
             </div>
           </div>
         ) : posts.length === 0 ? (
-          <div className="text-center mt-16 text-gray-500">No posts yet.</div>
+          // No Posts Yet
+          <div className="mt-20 text-center">
+            <div className="text-gray-400 text-6xl mb-4">📭</div>
+            <h3 className="text-lg font-semibold text-gray-800">
+              No posts in your feed… yet!
+            </h3>
+            <p className="text-gray-500 mt-1">
+              Be the first to share something with the community.
+            </p>
+            <Link
+              to="/create"
+              className="mt-6 inline-block bg-gradient-to-r from-cyan-500 to-cyan-600 text-white px-6 py-2 rounded-full shadow-lg hover:from-cyan-600 hover:to-cyan-700 transition-all"
+            >
+              Create Your First Post
+            </Link>
+          </div>
         ) : (
-          <div className="space-y-4">
+          // Posts List
+          <div className="space-y-5 animate-fadeIn">
             {posts.map((post, i) => (
               <PostCard key={post._id || i} post={post} />
             ))}
