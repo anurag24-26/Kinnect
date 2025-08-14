@@ -1,5 +1,5 @@
 const User = require("../models/user.model");
-const cloudinary = require("../utils/cloudinary");
+const cloudinary = require("../config/cloudinary");
 
 // GET /api/users/:id
 exports.getUserProfile = async (req, res) => {
