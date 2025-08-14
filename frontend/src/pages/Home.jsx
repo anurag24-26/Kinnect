@@ -47,29 +47,29 @@ const Home = () => {
     if (!authLoading && !user) setPosts([]);
   }, [authLoading, user]);
 
-  // Loader state
   if (showLoader) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-slate-100">
+      <div className="min-h-screen flex items-center justify-center bg-[#16161A] text-[#FFFFFE]">
         <KinnectLoader />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white text-gray-900 p-5">
+    <div className="min-h-screen bg-[#16161A] text-[#FFFFFE] px-5 py-8">
       <div className="max-w-2xl mx-auto">
+        
         {/* Page Title */}
-        <div className="flex items-center gap-3 mb-6 border-b border-gray-200 pb-3">
-          <MdCampaign className="text-cyan-600 text-3xl animate-pulse" />
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-cyan-700">
+        <div className="flex items-center gap-3 mb-6 pb-3 border-b border-[#94A1B2]">
+          <MdCampaign className="text-3xl text-transparent bg-clip-text bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] animate-pulse" />
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] bg-clip-text text-transparent">
             Community Feed
           </h1>
         </div>
 
         {/* Error Message */}
         {error && (
-          <div className="mb-4 p-4 border border-red-300 bg-red-50 rounded-lg text-red-600 text-sm shadow-sm">
+          <div className="mb-4 p-4 rounded-lg border border-[#E63946] bg-[#E63946]/10 text-[#E63946] text-sm shadow-sm">
             {error}
           </div>
         )}
@@ -78,10 +78,14 @@ const Home = () => {
         {!user ? (
           // Logged Out State
           <div className="mt-20 text-center space-y-4">
-            <h2 className="text-xl font-semibold text-gray-800">
-              Welcome to <span className="text-cyan-600">Kinnect</span> ✨
+            <h2 className="text-xl font-semibold">
+              Welcome to{" "}
+              <span className="bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] bg-clip-text text-transparent">
+                Kinnect
+              </span>{" "}
+              ✨
             </h2>
-            <p className="text-gray-600 max-w-md mx-auto leading-relaxed">
+            <p className="text-[#94A1B2] max-w-md mx-auto leading-relaxed">
               Join our vibrant community and start sharing your thoughts, stories,
               and moments with people around the world.
             </p>
@@ -89,13 +93,13 @@ const Home = () => {
             <div className="flex justify-center gap-4 mt-6">
               <Link
                 to="/login"
-                className="bg-cyan-600 text-white px-5 py-2 rounded-full shadow-md hover:bg-cyan-700 transition-all"
+                className="px-5 py-2 rounded-full shadow-lg text-white bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] hover:scale-105 transition-transform"
               >
                 Sign In
               </Link>
               <Link
                 to="/register"
-                className="bg-white border border-gray-300 text-gray-700 px-5 py-2 rounded-full shadow-sm hover:bg-gray-100 transition-all"
+                className="px-5 py-2 rounded-full border border-[#94A1B2] text-[#94A1B2] hover:border-[#7F5AF0] hover:text-white hover:bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] transition-all"
               >
                 Create Account
               </Link>
@@ -104,16 +108,14 @@ const Home = () => {
         ) : posts.length === 0 ? (
           // No Posts Yet
           <div className="mt-20 text-center">
-            <div className="text-gray-400 text-6xl mb-4">📭</div>
-            <h3 className="text-lg font-semibold text-gray-800">
-              No posts in your feed… yet!
-            </h3>
-            <p className="text-gray-500 mt-1">
+            <div className="text-[#94A1B2] text-6xl mb-4">📭</div>
+            <h3 className="text-lg font-semibold">No posts in your feed… yet!</h3>
+            <p className="text-[#94A1B2] mt-1">
               Be the first to share something with the community.
             </p>
             <Link
               to="/create"
-              className="mt-6 inline-block bg-gradient-to-r from-cyan-500 to-cyan-600 text-white px-6 py-2 rounded-full shadow-lg hover:from-cyan-600 hover:to-cyan-700 transition-all"
+              className="mt-6 inline-block px-6 py-2 rounded-full shadow-lg text-white bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] hover:scale-105 transition-transform"
             >
               Create Your First Post
             </Link>

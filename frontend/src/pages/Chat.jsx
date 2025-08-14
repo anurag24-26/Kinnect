@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import io from "socket.io-client";
-import { FaCircle } from "react-icons/fa";
+import { FaCircle, FaPaperPlane, FaSmile } from "react-icons/fa";
 import { IoArrowBack } from "react-icons/io5";
 
 const socket = io("https://kinnectbackend.onrender.com");
@@ -15,12 +15,12 @@ const Chat = () => {
   const [typingUsers, setTypingUsers] = useState({});
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [unreadMessages, setUnreadMessages] = useState({});
-  const [mobileView, setMobileView] = useState(false); // detect phone or desktop
+  const [mobileView, setMobileView] = useState(false);
   const bottomRef = useRef(null);
 
   const token = localStorage.getItem("token");
 
-  // Detect viewport size for mobile/desktop view
+  // Detect mobile view
   useEffect(() => {
     const checkMobile = () => setMobileView(window.innerWidth < 768);
     checkMobile();
@@ -28,6 +28,7 @@ const Chat = () => {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  // Decode token to get userId
   useEffect(() => {
     if (token) {
       const decoded = JSON.parse(atob(token.split(".")[1]));
@@ -35,7 +36,12 @@ const Chat = () => {
     }
   }, [token]);
 
+  // Socket setup & fetch following list
   useEffect(() => {
+    if (!currentUserId) return;
+
+    socket.emit("join", currentUserId);
+
     const fetchFollowing = async () => {
       try {
         const res = await axios.get(
@@ -53,36 +59,33 @@ const Chat = () => {
       }
     };
 
-    if (currentUserId) {
-      socket.emit("join", currentUserId);
-      fetchFollowing();
+    fetchFollowing();
 
-      socket.on("receiveMessage", (data) => {
-        if (
-          selectedAccount &&
-          (data.senderId === selectedAccount.id ||
-            data.receiverId === selectedAccount.id)
-        ) {
-          setChat((prev) => [...prev, data]);
-        } else if (data.receiverId === currentUserId) {
-          setUnreadMessages((prev) => ({
-            ...prev,
-            [data.senderId]: (prev[data.senderId] || 0) + 1,
-          }));
-        }
-      });
+    socket.on("receiveMessage", (data) => {
+      if (
+        selectedAccount &&
+        (data.senderId === selectedAccount.id ||
+          data.receiverId === selectedAccount.id)
+      ) {
+        setChat((prev) => [...prev, data]);
+      } else if (data.receiverId === currentUserId) {
+        setUnreadMessages((prev) => ({
+          ...prev,
+          [data.senderId]: (prev[data.senderId] || 0) + 1,
+        }));
+      }
+    });
 
-      socket.on("typing", ({ senderId }) => {
-        setTypingUsers((prev) => ({ ...prev, [senderId]: true }));
-        setTimeout(() => {
-          setTypingUsers((prev) => ({ ...prev, [senderId]: false }));
-        }, 2000);
-      });
+    socket.on("typing", ({ senderId }) => {
+      setTypingUsers((prev) => ({ ...prev, [senderId]: true }));
+      setTimeout(() => {
+        setTypingUsers((prev) => ({ ...prev, [senderId]: false }));
+      }, 2000);
+    });
 
-      socket.on("onlineUsers", (userList) => {
-        setOnlineUsers(userList);
-      });
-    }
+    socket.on("onlineUsers", (userList) => {
+      setOnlineUsers(userList);
+    });
 
     return () => {
       socket.off("receiveMessage");
@@ -91,12 +94,12 @@ const Chat = () => {
     };
   }, [currentUserId, selectedAccount]);
 
+  // Always scroll to bottom when messages change
   useEffect(() => {
-    if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: "smooth" });
-    }
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat]);
 
+  // Handle selecting an account
   const handleAccountClick = async (account) => {
     setSelectedAccount(account);
     setUnreadMessages((prev) => {
@@ -110,12 +113,18 @@ const Chat = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setChat(res.data);
+
+      // ✅ Ensure scroll happens after render
+      setTimeout(() => {
+        bottomRef.current?.scrollIntoView({ behavior: "auto" });
+      }, 50);
     } catch (err) {
       console.error("❌ Failed to load chat history", err);
       setChat([]);
     }
   };
 
+  // Send message
   const handleSendMessage = () => {
     if (selectedAccount && message.trim()) {
       const data = {
@@ -128,6 +137,7 @@ const Chat = () => {
     }
   };
 
+  // Notify typing
   const handleTyping = () => {
     if (selectedAccount) {
       socket.emit("typing", {
@@ -137,37 +147,38 @@ const Chat = () => {
     }
   };
 
+  // Check online status
   const isUserOnline = (userId) =>
     onlineUsers.some(
       (user) => user === userId || user?.id === userId || user?._id === userId
     );
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-cyan-50 to-white font-sans">
-      {/* --- SIDEBAR / CHAT LIST --- */}
+    <div className="flex h-[80dvh] overflow-hidden bg-[#16161A] text-[#FFFFFE] font-inter">
+      {/* Sidebar */}
       <aside
-        className={`w-full md:w-1/3 md:max-w-xs border-r border-gray-200 bg-white shadow-lg ${
+        className={`${
           mobileView && selectedAccount ? "hidden" : "flex"
-        } flex-col`}
+        } flex-col w-full md:w-1/3 md:max-w-xs border-r border-[#2CB67D]/20`}
       >
-        <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white font-bold text-lg">
+        <div className="p-4 bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] text-white font-bold text-lg shadow-md">
           Messages
         </div>
         <div className="overflow-y-auto flex-1">
           {accounts.length === 0 ? (
-            <p className="text-gray-400 text-center mt-20">
+            <p className="text-[#94A1B2] text-center mt-20">
               Follow someone to start chatting
             </p>
           ) : (
-            <ul className="divide-y">
+            <ul>
               {accounts.map((acc) => (
                 <li
                   key={acc.id}
                   onClick={() => handleAccountClick(acc)}
-                  className={`flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-cyan-50 transition ${
+                  className={`flex items-center justify-between px-4 py-3 cursor-pointer rounded-xl transition-all hover:bg-[#2CB67D]/10 ${
                     selectedAccount?.id === acc.id
-                      ? "bg-cyan-100"
-                      : "bg-white"
+                      ? "bg-[#2CB67D]/20"
+                      : "bg-transparent"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -176,28 +187,32 @@ const Chat = () => {
                         <img
                           src={acc.avatar}
                           alt={acc.name}
-                          className="h-10 w-10 rounded-full"
+                          className="h-9 w-10 rounded-full border-2 border-transparent animate-[spin_6s_linear_infinite]"
+                          style={{
+                            borderImage:
+                              "linear-gradient(45deg,#7F5AF0,#2CB67D) 1",
+                          }}
                         />
                       ) : (
-                        <div className="h-10 w-10 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-700 font-bold">
+                        <div className="h-9 w-10 rounded-full bg-[#7F5AF0]/30 flex items-center justify-center font-bold text-[#7F5AF0]">
                           {acc.name.charAt(0)}
                         </div>
                       )}
                       <FaCircle
                         className={`absolute bottom-0 right-0 text-[10px] ${
                           isUserOnline(acc.id)
-                            ? "text-green-500"
-                            : "text-gray-300"
+                            ? "text-[#2CB67D]"
+                            : "text-[#94A1B2]"
                         }`}
                       />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">{acc.name}</p>
-                      <p className="text-xs text-gray-400">Tap to chat</p>
+                      <p className="font-medium">{acc.name}</p>
+                      <p className="text-xs text-[#94A1B2]">Tap to chat</p>
                     </div>
                   </div>
                   {unreadMessages[acc.id] && (
-                    <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                    <span className="bg-[#E63946] text-white text-xs px-2 py-0.5 rounded-full">
                       {unreadMessages[acc.id]}
                     </span>
                   )}
@@ -208,7 +223,7 @@ const Chat = () => {
         </div>
       </aside>
 
-      {/* --- CHAT PANEL --- */}
+      {/* Chat Panel */}
       <main
         className={`flex-1 flex flex-col ${
           mobileView && !selectedAccount ? "hidden" : "flex"
@@ -216,12 +231,12 @@ const Chat = () => {
       >
         {selectedAccount ? (
           <>
-            {/* Fixed Header */}
-            <header className="flex items-center p-4 border-b border-gray-200 bg-white flex-shrink-0 shadow-sm">
+            {/* Header */}
+            <header className="flex items-center p-4 bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] text-white shadow-lg">
               {mobileView && (
                 <button
                   onClick={() => setSelectedAccount(null)}
-                  className="mr-3 text-2xl text-cyan-600"
+                  className="mr-3 text-2xl hover:scale-105 transition"
                 >
                   <IoArrowBack />
                 </button>
@@ -231,24 +246,25 @@ const Chat = () => {
                   <img
                     src={selectedAccount.avatar}
                     alt={selectedAccount.name}
-                    className="h-8 w-8 rounded-full"
+                    className="h-8 w-8 rounded-full border-2 border-transparent animate-[spin_6s_linear_infinite]"
+                    style={{
+                      borderImage: "linear-gradient(45deg,#7F5AF0,#2CB67D) 1",
+                    }}
                   />
                 ) : (
-                  <div className="h-8 w-8 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-700 font-bold">
+                  <div className="h-8 w-8 rounded-full bg-[#7F5AF0]/30 flex items-center justify-center font-bold text-[#FFFFFE]">
                     {selectedAccount.name.charAt(0)}
                   </div>
                 )}
-                <span className="font-semibold text-gray-800">
-                  {selectedAccount.name}
-                </span>
+                <span className="font-semibold">{selectedAccount.name}</span>
                 {isUserOnline(selectedAccount.id) && (
-                  <FaCircle className="text-green-500 text-[8px]" />
+                  <FaCircle className="text-[#2CB67D] text-[8px]" />
                 )}
               </div>
             </header>
 
-            {/* Scrollable messages */}
-            <section className="flex-1 overflow-y-auto px-4 py-6 space-y-4 bg-gray-50">
+            {/* Messages */}
+            <section className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
               {chat.map((msg, i) => {
                 const isSender = msg.senderId === currentUserId;
                 return (
@@ -261,8 +277,8 @@ const Chat = () => {
                     <div
                       className={`px-4 py-2 max-w-xs rounded-2xl shadow ${
                         isSender
-                          ? "bg-gradient-to-r from-cyan-500 to-cyan-600 text-white"
-                          : "bg-white border border-gray-200 text-gray-800"
+                          ? "bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] text-white"
+                          : "bg-[#1F1F23] text-[#FFFFFE]"
                       }`}
                     >
                       {msg.message}
@@ -271,15 +287,20 @@ const Chat = () => {
                 );
               })}
               {typingUsers[selectedAccount?.id] && (
-                <div className="text-sm italic text-cyan-400 animate-pulse">
-                  Typing...
+                <div className="flex gap-1 items-center">
+                  <span className="w-2 h-2 bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] rounded-full animate-bounce"></span>
+                  <span className="w-2 h-2 bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] rounded-full animate-bounce delay-100"></span>
+                  <span className="w-2 h-2 bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] rounded-full animate-bounce delay-200"></span>
                 </div>
               )}
               <div ref={bottomRef} />
             </section>
 
-            {/* Fixed Input */}
-            <footer className="p-3 border-t border-gray-200 bg-white flex gap-2 flex-shrink-0">
+            {/* Input */}
+            <footer className="p-3 bg-[#1F1F23] flex gap-2 items-center">
+              <button className="text-[#FF8906] text-xl hover:scale-110 transition">
+                <FaSmile />
+              </button>
               <input
                 type="text"
                 value={message}
@@ -289,18 +310,18 @@ const Chat = () => {
                 }}
                 onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                 placeholder="Type your message..."
-                className="flex-1 border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                className="flex-1 bg-[#16161A] border border-[#2CB67D]/40 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2CB67D]"
               />
               <button
                 onClick={handleSendMessage}
-                className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-full text-sm"
+                className="bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] px-4 py-2 rounded-full text-white text-sm flex items-center gap-1 hover:scale-105 transition-transform shadow-md"
               >
-                Send
+                <FaPaperPlane />
               </button>
             </footer>
           </>
         ) : (
-          <div className="flex items-center justify-center flex-1 text-gray-400">
+          <div className="flex items-center justify-center flex-1 text-[#94A1B2]">
             Select a conversation to start chatting
           </div>
         )}

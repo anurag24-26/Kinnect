@@ -38,40 +38,43 @@ const Layout = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-2xl font-semibold text-cyan-700">
+      <div className="min-h-screen flex items-center justify-center text-2xl font-semibold text-[#2CB67D]">
         Loading...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 text-gray-800 flex flex-col">
+    <div className="min-h-screen bg-[#16161A] text-[#FFFFFE] flex flex-col font-inter">
       
       {/* Navbar */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/70 backdrop-blur-md border-b shadow-md">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-[#16161A]/80 backdrop-blur-md border-b border-[#2CB67D]/30 shadow-lg">
         <div className="max-w-7xl mx-auto flex justify-between items-center px-4 py-3 md:px-6">
 
           {/* Logo */}
-          <Link to="/" className="text-2xl font-extrabold tracking-tight text-cyan-700 hover:text-cyan-600 transition-colors">
+          <Link 
+            to="/" 
+            className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] bg-clip-text text-transparent hover:opacity-90 transition"
+          >
             Kinnect
           </Link>
 
           {/* Desktop Search Bar */}
           <form
             onSubmit={handleSearchSubmit}
-            className="hidden md:flex items-center bg-white/80 border border-gray-200 rounded-full px-4 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-cyan-400 transition"
+            className="hidden md:flex items-center bg-[#16161A] border border-[#94A1B2]/30 rounded-full px-4 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-[#7F5AF0] transition"
           >
-            <AiOutlineSearch className="text-gray-500 text-lg" />
+            <AiOutlineSearch className="text-[#94A1B2]" />
             <input
               type="text"
               placeholder="Search username..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-transparent outline-none px-2 text-sm flex-1"
+              className="bg-transparent outline-none px-2 text-sm flex-1 text-[#FFFFFE]"
             />
             <button
               type="submit"
-              className="ml-2 text-white bg-cyan-600 hover:bg-cyan-700 px-3 py-1 rounded-full text-sm transition-colors"
+              className="ml-2 text-sm px-3 py-1 rounded-full bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] text-white hover:scale-105 transition-all"
             >
               Search
             </button>
@@ -79,31 +82,40 @@ const Layout = () => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-6 text-sm font-medium">
-            <Link to="/" className="hover:text-cyan-600 flex items-center gap-1">
+            <Link to="/" className="hover:text-[#2CB67D] flex items-center gap-1">
               <AiFillHome className="text-lg" /> Explore
             </Link>
 
             {user ? (
               <>
-                <Link to="/chat" className="hover:text-cyan-600 flex items-center gap-1">
+                <Link to="/chat" className="hover:text-[#2CB67D] flex items-center gap-1">
                   <BiMessageDetail className="text-lg" /> Chat
                 </Link>
                 <NotificationBell />
-                <Link to="/settings" className="hover:text-cyan-600">
+                <Link to="/settings" className="hover:text-[#2CB67D]">
                   <FaCog className="text-lg" />
                 </Link>
-                <Link to="/profile" className="hover:text-cyan-600 flex items-center gap-1">
+                <Link to="/profile" className="hover:text-[#2CB67D] flex items-center gap-1">
                   <FaUserCircle className="text-lg" /> {user.username}
                 </Link>
+
+                {/* Create Post Button - Desktop */}
+                <Link
+                  to="/create"
+                  className="bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] hover:from-[#2CB67D] hover:to-[#7F5AF0] text-white px-4 py-1.5 rounded-full flex items-center gap-2 shadow-md hover:shadow-lg transition-all"
+                >
+                  <AiOutlinePlusCircle className="text-lg" /> Create
+                </Link>
+
                 <button
                   onClick={handleLogout}
-                  className="text-red-600 hover:text-red-700 flex items-center gap-1"
+                  className="text-[#E63946] hover:brightness-125 flex items-center gap-1"
                 >
                   <FaSignOutAlt className="text-lg" /> Logout
                 </button>
               </>
             ) : (
-              <Link to="/login" className="hover:text-cyan-600 flex items-center gap-1">
+              <Link to="/login" className="hover:text-[#2CB67D] flex items-center gap-1">
                 <FaSignInAlt className="text-lg" /> Login
               </Link>
             )}
@@ -111,7 +123,7 @@ const Layout = () => {
 
           {/* Mobile Menu Toggle */}
           <button
-            className="md:hidden text-2xl text-cyan-700"
+            className="md:hidden text-2xl text-[#7F5AF0]"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? <HiX /> : <HiMenuAlt3 />}
@@ -122,17 +134,15 @@ const Layout = () => {
       {/* Mobile Side Drawer */}
       {mobileMenuOpen && (
         <>
-          {/* Overlay */}
           <div
             className="fixed inset-0 bg-black/40 z-40"
             onClick={() => setMobileMenuOpen(false)}
           ></div>
 
-          {/* Drawer */}
-          <div className={`fixed right-0 top-0 h-full w-72 bg-white z-50 shadow-lg transform transition-transform duration-300 ${mobileMenuOpen ? "translate-x-0" : "translate-x-full"}`}>
-            <div className="p-4 border-b flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-cyan-700">Menu</h2>
-              <button onClick={() => setMobileMenuOpen(false)} className="text-2xl">
+          <div className={`fixed right-0 top-0 h-full w-72 bg-[#16161A] z-50 shadow-lg transform transition-transform duration-300 ${mobileMenuOpen ? "translate-x-0" : "translate-x-full"}`}>
+            <div className="p-4 border-b border-[#94A1B2]/30 flex items-center justify-between">
+              <h2 className="text-lg font-semibold bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] bg-clip-text text-transparent">Menu</h2>
+              <button onClick={() => setMobileMenuOpen(false)} className="text-2xl text-[#94A1B2]">
                 <HiX />
               </button>
             </div>
@@ -144,41 +154,51 @@ const Layout = () => {
                 placeholder="Search username..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 px-3 py-1.5 border rounded-full text-sm"
+                className="flex-1 px-3 py-1.5 border border-[#94A1B2]/30 rounded-full text-sm bg-transparent text-[#FFFFFE]"
               />
-              <button type="submit" className="bg-cyan-600 text-white p-2 rounded-full">
+              <button type="submit" className="bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] text-white p-2 rounded-full">
                 <AiOutlineSearch />
               </button>
             </form>
 
             {/* Menu Links */}
-            <div className="flex flex-col gap-4 p-4 text-gray-700">
-              <Link to="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 hover:text-cyan-600">
+            <div className="flex flex-col gap-4 p-4 text-[#94A1B2]">
+              <Link to="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 hover:text-[#2CB67D]">
                 <AiFillHome /> Explore
               </Link>
               {user ? (
                 <>
-                  <Link to="/chat" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 hover:text-cyan-600">
+                  <Link to="/chat" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 hover:text-[#2CB67D]">
                     <BiMessageDetail /> Chat
                   </Link>
-                  <Link to="/settings" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 hover:text-cyan-600">
+                  <Link to="/settings" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 hover:text-[#2CB67D]">
                     <FaCog /> Settings
                   </Link>
-                  <Link to="/profile" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 hover:text-cyan-600">
+                  <Link to="/profile" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 hover:text-[#2CB67D]">
                     <FaUserCircle /> {user.username}
                   </Link>
+
+                  {/* Create Post in Mobile */}
+                  <Link
+                    to="/create"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-2 text-white bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] px-3 py-1.5 rounded-full hover:from-[#2CB67D] hover:to-[#7F5AF0]"
+                  >
+                    <AiOutlinePlusCircle /> Create
+                  </Link>
+
                   <button
                     onClick={() => {
                       handleLogout();
                       setMobileMenuOpen(false);
                     }}
-                    className="flex items-center gap-2 text-red-600 hover:text-red-700"
+                    className="flex items-center gap-2 text-[#E63946] hover:brightness-125"
                   >
                     <FaSignOutAlt /> Logout
                   </button>
                 </>
               ) : (
-                <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 hover:text-cyan-600">
+                <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 hover:text-[#2CB67D]">
                   <FaSignInAlt /> Login
                 </Link>
               )}
@@ -188,20 +208,9 @@ const Layout = () => {
       )}
 
       {/* Main Content */}
-      <main className="pt-20 px-4 pb-32 max-w-7xl mx-auto w-full">
+      <main className="pt-20 px-4 pb-12 max-w-7xl mx-auto w-full">
         <Outlet />
       </main>
-
-      {/* Floating Create Button (FAB) */}
-      {user && (
-        <Link
-          to="/create"
-          title="Create Post"
-          className="fixed bottom-6 right-6 md:right-10 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white p-4 rounded-full shadow-xl hover:scale-110 transform transition-all"
-        >
-          <AiOutlinePlusCircle className="text-2xl" />
-        </Link>
-      )}
     </div>
   );
 };

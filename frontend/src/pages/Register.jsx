@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FiUserPlus } from "react-icons/fi";
-import Button from "../components/Button";
 
 const Register = () => {
   const [form, setForm] = useState({ username: "", email: "", password: "" });
@@ -18,7 +17,6 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       const res = await axios.post(
         "https://kinnectbackend.onrender.com/api/auth/register",
@@ -30,8 +28,7 @@ const Register = () => {
       setError(
         err.response?.data?.message === "Username already exists"
           ? "Username is already taken. Please choose another."
-          : err.response?.data?.message ||
-              "Something went wrong. Please try again."
+          : err.response?.data?.message || "Something went wrong. Please try again."
       );
     } finally {
       setLoading(false);
@@ -39,25 +36,20 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 to-blue-100 px-4">
-      <div className="w-full max-w-xl bg-white shadow-2xl p-10 rounded-2xl border-t-4 border-cyan-500">
-        {/* Logo or App name */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-extrabold text-cyan-600">Kinnect</h1>
-          <p className="text-gray-500 mt-1 text-sm">
-            Connect seamlessly with your world 🌐
-          </p>
-        </div>
-
+    <div className="min-h-screen flex items-center justify-center bg-[#16161A] text-[#FFFFFE] px-4">
+      <div className="w-full max-w-md bg-[#1F1F24] p-8 rounded-2xl shadow-lg border border-[#2CB67D]/20">
+        
         {/* Title */}
-        <div className="flex items-center gap-2 mb-6 text-cyan-600">
-          <FiUserPlus className="text-2xl" />
-          <h2 className="text-xl font-semibold">Create Your Kinnect Account</h2>
+        <div className="flex items-center gap-2 mb-6">
+          <FiUserPlus className="text-2xl text-transparent bg-clip-text bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D]" />
+          <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D]">
+            Create Your Account
+          </h2>
         </div>
 
-        {/* Error Message */}
+        {/* Error */}
         {error && (
-          <div className="bg-red-100 text-red-700 border border-red-200 p-3 mb-4 rounded-md text-sm">
+          <div className="bg-[#E63946]/10 text-[#E63946] border border-[#E63946]/30 p-3 mb-4 rounded-lg text-sm">
             {error}
           </div>
         )}
@@ -70,9 +62,7 @@ const Register = () => {
             value={form.username}
             onChange={handleChange}
             required
-            className={`w-full p-3 rounded-lg border ${
-              error.includes("Username") ? "border-red-400" : "border-gray-300"
-            } focus:ring-2 focus:ring-cyan-500 outline-none`}
+            className={`w-full p-3 rounded-lg bg-[#2A2A30] border border-transparent focus:border-[#7F5AF0] focus:ring-2 focus:ring-[#7F5AF0]/50 outline-none`}
           />
           <input
             name="email"
@@ -81,7 +71,7 @@ const Register = () => {
             value={form.email}
             onChange={handleChange}
             required
-            className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-cyan-500 outline-none"
+            className="w-full p-3 rounded-lg bg-[#2A2A30] border border-transparent focus:border-[#7F5AF0] focus:ring-2 focus:ring-[#7F5AF0]/50 outline-none"
           />
           <input
             name="password"
@@ -90,25 +80,24 @@ const Register = () => {
             value={form.password}
             onChange={handleChange}
             required
-            className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-cyan-500 outline-none"
+            className="w-full p-3 rounded-lg bg-[#2A2A30] border border-transparent focus:border-[#7F5AF0] focus:ring-2 focus:ring-[#7F5AF0]/50 outline-none"
           />
 
-          <Button
+          <button
             type="submit"
-            variant="primary"
             disabled={loading}
-            className="w-full mt-4 bg-cyan-600 hover:bg-cyan-700 text-white font-medium rounded-lg p-3 disabled:opacity-50 transition-all"
+            className="w-full py-3 rounded-full font-bold text-white bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-50"
           >
             {loading ? "Registering..." : "Register"}
-          </Button>
+          </button>
         </form>
 
-        {/* Footer Link */}
-        <p className="mt-6 text-sm text-center text-gray-600">
+        {/* Footer */}
+        <p className="mt-6 text-sm text-center text-[#94A1B2]">
           Already have an account?{" "}
           <Link
             to="/login"
-            className="text-cyan-600 font-medium hover:underline"
+            className="text-[#FF8906] font-medium hover:underline"
           >
             Login here
           </Link>
