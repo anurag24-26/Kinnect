@@ -1,24 +1,24 @@
 const Message = require("../models/message.model");
-const User = require("../models/user.model"); // for online/last seen tracking
+const User = require("../models/user.model");
 
 const chatSocketHandler = (io, socket) => {
-  // Join personal room
+  // User joins their personal room
   socket.on("join", async (userId) => {
-    socket.userId = userId;
-    socket.join(userId);
-    console.log(`✅ User ${userId} joined their personal room`);
-
-    // Mark user online
     try {
+      socket.userId = userId;
+      socket.join(userId);
+      console.log(`✅ User ${userId} joined their personal room`);
+
+      // Update online status
       await User.findByIdAndUpdate(userId, { isOnline: true });
-      socket.broadcast.emit("userOnline", userId); // broadcast to others
+      socket.broadcast.emit("userOnline", userId); // could be refined to friends only
     } catch (err) {
       console.error("⚠️ Error updating online status:", err.message);
     }
   });
 
   // Send message
-  socket.on("sendMessage", async ({ senderId, receiverId, message }) => {
+  socket.on("sendMessage", async ({ senderId, receiverId, message }, callback) => {
     try {
       const newMessage = await Message.create({
         senderId,
@@ -26,23 +26,28 @@ const chatSocketHandler = (io, socket) => {
         message,
       });
 
-      // Send to receiver if online
+      // Deliver message to receiver
       io.to(receiverId).emit("receiveMessage", newMessage);
 
-      // Confirm to sender
-      socket.emit("receiveMessage", newMessage);
+      // Deliver message to sender (confirmation, not duplication)
+      if (receiverId !== senderId) {
+        socket.emit("receiveMessage", newMessage);
+      }
+
+      // Acknowledge success
+      if (callback) callback({ success: true, message: newMessage });
     } catch (err) {
       console.error("❌ Message DB error:", err.message);
-      socket.emit("error", { message: "Message failed" });
+      if (callback) callback({ success: false, error: "Message failed" });
     }
   });
 
-  // Typing indicator (optional)
+  // Typing indicator
   socket.on("typing", ({ senderId, receiverId }) => {
     io.to(receiverId).emit("typing", { senderId });
   });
 
-  // On disconnect, update last seen
+  // Disconnect → set offline + last seen
   socket.on("disconnect", async () => {
     const userId = socket.userId;
     if (!userId) return;
