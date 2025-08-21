@@ -13,7 +13,7 @@ router.get("/:user1/:user2", async (req, res) => {
         { senderId: user1, receiverId: user2 },
         { senderId: user2, receiverId: user1 },
       ],
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: 1 });
 
     res.json(messages);
   } catch (err) {
