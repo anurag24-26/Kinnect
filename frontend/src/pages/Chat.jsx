@@ -82,7 +82,7 @@ const Chat = () => {
           // avoid duplicates by checking _id
           if (prev.some((m) => m._id === data._id)) return prev;
           return [...prev, data].sort(
-            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+            (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
           );
         });
       }
@@ -152,7 +152,7 @@ const Chat = () => {
 
       // ✅ Oldest → newest
       const sorted = (res.data || []).sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
       );
       setChat(sorted);
 
