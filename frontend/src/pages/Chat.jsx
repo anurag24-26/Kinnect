@@ -78,11 +78,13 @@ const Chat = () => {
           data.receiverId === selectedAccount.id);
 
       if (isActiveThread) {
-        setChat((prev) =>
-          [...prev, data].sort(
-            (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-          )
-        );
+        setChat((prev) => {
+          // avoid duplicates by checking _id
+          if (prev.some((m) => m._id === data._id)) return prev;
+          return [...prev, data].sort(
+            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+          );
+        });
       }
 
       if (
@@ -147,11 +149,17 @@ const Chat = () => {
         `https://kinnectbackend.onrender.com/api/messages/${currentUserId}/${account.id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      // ✅ Oldest → newest
       const sorted = (res.data || []).sort(
-        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
       );
       setChat(sorted);
-      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "auto" }), 50);
+
+      setTimeout(
+        () => bottomRef.current?.scrollIntoView({ behavior: "auto" }),
+        50
+      );
     } catch (err) {
       console.error("❌ Failed to load chat history", err);
       setChat([]);
@@ -185,7 +193,11 @@ const Chat = () => {
       (ack) => {
         if (ack?.success && ack.message) {
           setChat((prev) => {
+            // replace temp with real
             const withoutTemp = prev.filter((m) => m._id !== tempId);
+            if (withoutTemp.some((m) => m._id === ack.message._id)) {
+              return withoutTemp; // avoid duplicates
+            }
             return [...withoutTemp, ack.message].sort(
               (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
             );
