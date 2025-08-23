@@ -178,7 +178,7 @@ const Layout = () => {
             {/* Menu Links */}
             <div className="flex flex-col gap-4 p-4 text-[#94A1B2] animate-slideIn">
               <Link
-                to="/"
+                to="/explore"
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center gap-2 hover:text-[#2CB67D] transition-transform duration-200 hover:translate-x-1"
               >

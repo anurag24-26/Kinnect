@@ -17,7 +17,7 @@ const upload = multer({ dest: "src/uploads/temp", limits: { files: 3 } });
 router.post("/", requireAuth, upload.array("images", 3), createPost);
 router.get("/", requireAuth, getAllPosts);
 router.get("/user/:id", requireAuth, getUserPosts);
-router.get("/trending", auth, getTrendingPosts);
+router.get("/trending", requireAuth, getTrendingPosts);
 router.put("/:id", requireAuth, updatePost);
 router.delete("/:id", requireAuth, deletePost);
 
