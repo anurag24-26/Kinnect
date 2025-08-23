@@ -11,13 +11,13 @@ const chatSocketHandler = (io, socket) => {
 
       // Update online status
       await User.findByIdAndUpdate(userId, { isOnline: true });
-      socket.broadcast.emit("userOnline", userId); // could be refined to friends only
+      socket.broadcast.emit("userOnline", userId);
     } catch (err) {
       console.error("⚠️ Error updating online status:", err.message);
     }
   });
 
-  // Send message
+  // Send message (no follow check, anyone can message)
   socket.on("sendMessage", async ({ senderId, receiverId, message }, callback) => {
     try {
       const newMessage = await Message.create({
@@ -29,12 +29,11 @@ const chatSocketHandler = (io, socket) => {
       // Deliver message to receiver
       io.to(receiverId).emit("receiveMessage", newMessage);
 
-      // Deliver message to sender (confirmation, not duplication)
+      // Confirmation for sender
       if (receiverId !== senderId) {
         socket.emit("receiveMessage", newMessage);
       }
 
-      // Acknowledge success
       if (callback) callback({ success: true, message: newMessage });
     } catch (err) {
       console.error("❌ Message DB error:", err.message);
@@ -47,7 +46,7 @@ const chatSocketHandler = (io, socket) => {
     io.to(receiverId).emit("typing", { senderId });
   });
 
-  // Disconnect → set offline + last seen
+  // Disconnect
   socket.on("disconnect", async () => {
     const userId = socket.userId;
     if (!userId) return;
