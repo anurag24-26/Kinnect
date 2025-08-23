@@ -8,29 +8,55 @@ const Explore = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Get logged-in user ID from localStorage (set during login/register)
+  const token = localStorage.getItem("token");
   const loggedInUserId = localStorage.getItem("userId");
+
+  // Fetch like status + count for a post
+ const fetchLikeStatus = async () => {
+    try {
+      const res = await axios.get(
+        `https://kinnectbackend.onrender.com/api/likes/${post._id}/status`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setLiked(res.data.liked);
+    } catch {}
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
 
-        // Trending posts
+        // 1. Fetch trending posts
         const postsRes = await axios.get(
-          "https://kinnectbackend.onrender.com/api/posts/trending"
+          "https://kinnectbackend.onrender.com/api/posts/trending",
+          { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        // Suggested users
+        let postsWithLikes = [];
+
+        // 2. For each post, fetch like status + count
+        for (const post of postsRes.data || []) {
+          const likeData = await fetchLikes(post._id);
+          postsWithLikes.push({
+            ...post,
+            likes: likeData.likes,
+            likedByMe: likeData.liked,
+          });
+        }
+
+        setTrendingPosts(postsWithLikes);
+
+        // 3. Fetch suggested users
         if (loggedInUserId) {
           const usersRes = await axios.get(
-            `https://kinnectbackend.onrender.com/api/users/suggested/${loggedInUserId}`
+            `https://kinnectbackend.onrender.com/api/users/suggested/${loggedInUserId}`,
+            { headers: { Authorization: `Bearer ${token}` } }
           );
           setSuggestedUsers(usersRes.data || []);
         }
-
-        setTrendingPosts(postsRes.data || []);
       } catch (err) {
+        console.error("⚠️ Explore fetch error:", err.response?.data || err.message);
         setError("⚠️ Failed to load explore content");
       } finally {
         setLoading(false);
@@ -38,9 +64,10 @@ const Explore = () => {
     };
 
     fetchData();
-  }, [loggedInUserId]);
+  }, [loggedInUserId, token]);
 
-  if (loading) return <p className="text-center py-6 text-[#94A1B2]">Loading Explore...</p>;
+  if (loading)
+    return <p className="text-center py-6 text-[#94A1B2]">Loading Explore...</p>;
   if (error) return <p className="text-center text-red-400">{error}</p>;
 
   return (
@@ -51,27 +78,40 @@ const Explore = () => {
           🔥 Trending Posts
         </h2>
         <div className="grid md:grid-cols-2 gap-6">
-          {trendingPosts.map((post) => (
-            <div
-              key={post._id}
-              className="bg-[#1F1F24] rounded-2xl p-5 border border-[#2CB67D]/20 shadow-lg hover:shadow-2xl transition-all"
-            >
-              <h3 className="font-semibold text-[#FFFFFE]">{post.user?.username}</h3>
-              <p className="text-[#94A1B2] mt-2">{post.text}</p>
+          {trendingPosts.length > 0 ? (
+            trendingPosts.map((post) => (
+              <div
+                key={post._id}
+                className="bg-[#1F1F24] rounded-2xl p-5 border border-[#2CB67D]/20 shadow-lg hover:shadow-2xl transition-all"
+              >
+                <h3 className="font-semibold text-[#FFFFFE]">
+                  {post.user?.username}
+                </h3>
+                <p className="text-[#94A1B2] mt-2">{post.text}</p>
 
-              {post.images && post.images.length > 0 && (
-                <img
-                  src={post.images[0]}
-                  alt="Post"
-                  className="rounded-xl mt-4 w-full object-cover"
-                />
-              )}
+                {post.images && post.images.length > 0 && (
+                  <div className="mt-4">
+                    <img
+                      src={post.images[0]}
+                      alt="Post"
+                      className="rounded-xl w-full h-64 object-cover sm:h-72 md:h-80 lg:h-96"
+                      loading="lazy"
+                    />
+                  </div>
+                )}
 
-              <div className="flex items-center gap-2 mt-4 text-[#94A1B2]">
-                <FaHeart className="text-red-500" /> {post.likes?.length || 0}
+                {/* Likes (just fetched, no toggle) */}
+                <div className="flex items-center gap-3 mt-4 text-[#94A1B2]">
+                  <FaHeart
+                    className={post.likedByMe ? "text-red-500" : "text-gray-400"}
+                  />
+                  <span>{post.likes?.length || 0}</span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p className="text-[#94A1B2]">No trending posts found.</p>
+          )}
         </div>
       </section>
 
@@ -81,20 +121,26 @@ const Explore = () => {
           ✨ Suggested Users
         </h2>
         <div className="grid md:grid-cols-3 gap-6">
-          {suggestedUsers.map((user) => (
-            <div
-              key={user._id}
-              className="bg-[#1F1F24] rounded-2xl p-5 flex items-center justify-between border border-[#7F5AF0]/20 shadow-md hover:shadow-xl transition-all"
-            >
-              <div>
-                <h3 className="font-semibold text-[#FFFFFE]">{user.username}</h3>
-                <p className="text-sm text-[#94A1B2]">{user.email}</p>
+          {suggestedUsers.length > 0 ? (
+            suggestedUsers.map((user) => (
+              <div
+                key={user._id}
+                className="bg-[#1F1F24] rounded-2xl p-5 flex items-center justify-between border border-[#7F5AF0]/20 shadow-md hover:shadow-xl transition-all"
+              >
+                <div>
+                  <h3 className="font-semibold text-[#FFFFFE]">
+                    {user.username}
+                  </h3>
+                  <p className="text-sm text-[#94A1B2]">{user.email}</p>
+                </div>
+                <button className="flex items-center gap-2 bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] text-white px-4 py-2 rounded-full shadow-md hover:scale-105 transition">
+                  <FaUserPlus /> Follow
+                </button>
               </div>
-              <button className="flex items-center gap-2 bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] text-white px-4 py-2 rounded-full shadow-md hover:scale-105 transition">
-                <FaUserPlus /> Follow
-              </button>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p className="text-[#94A1B2]">No suggested users right now.</p>
+          )}
         </div>
       </section>
     </div>

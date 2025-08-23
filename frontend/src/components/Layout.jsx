@@ -85,7 +85,7 @@ const Layout = () => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-6 text-sm font-medium">
-            <Link to="/" className="hover:text-[#2CB67D] flex items-center gap-1">
+            <Link to="/explore" className="hover:text-[#2CB67D] flex items-center gap-1">
               <AiFillHome className="text-lg" /> Explore
             </Link>
             {user ? (
