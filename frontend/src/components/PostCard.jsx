@@ -1,20 +1,31 @@
 import { useEffect, useState } from "react";
-import { FaHeart, FaRegHeart, FaCommentDots } from "react-icons/fa";
+import {
+  FaHeart,
+  FaRegHeart,
+  FaCommentDots,
+  FaChevronLeft,
+  FaChevronRight,
+} from "react-icons/fa6";
+import { BsThreeDots } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import "./postcard.css"; // your CSS for grid + animations
 
-const PostCard = ({ post }) => {
+const PostCard = ({ post, onDelete }) => {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [comments, setComments] = useState(post.comments || []);
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [showMenu, setShowMenu] = useState(false);
 
   const token = localStorage.getItem("token");
+  const userId = localStorage.getItem("userId"); // 🔥 assume you store this after login
   const navigate = useNavigate();
 
-  // --- API Calls ---
+  // --- Fetch Like/Comments ---
   const fetchLikeStatus = async () => {
     try {
       const res = await axios.get(
@@ -77,6 +88,20 @@ const PostCard = ({ post }) => {
     }
   };
 
+  // --- Delete Post ---
+  const handleDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete this post?")) return;
+    try {
+      await axios.delete(
+        `https://kinnectbackend.onrender.com/api/posts/${post._id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (onDelete) onDelete(post._id); // parent removes post from UI
+    } catch (err) {
+      console.error("❌ Failed to delete post", err);
+    }
+  };
+
   useEffect(() => {
     if (token) {
       fetchLikeStatus();
@@ -85,128 +110,159 @@ const PostCard = ({ post }) => {
     }
   }, [post._id]);
 
+  // Image Carousel
+  const nextImage = () => {
+    if (!post.images?.length) return;
+    setActiveIndex((prev) => (prev + 1) % post.images.length);
+  };
+
+  const prevImage = () => {
+    if (!post.images?.length) return;
+    setActiveIndex((prev) =>
+      prev === 0 ? post.images.length - 1 : prev - 1
+    );
+  };
+
   return (
-    <div className="bg-[#1E1E2E] rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all border border-white/10">
-      {/* User Info */}
-      <div className="flex items-center gap-3 p-4 border-b border-white/10">
-        {post.user?.avatar ? (
-          <img
-            src={post.user.avatar}
-            alt="avatar"
-            onClick={() => navigate(`/profile/${post.user._id}`)}
-            className="w-12 h-12 rounded-full object-cover cursor-pointer"
-          />
-        ) : (
-          <div
-            onClick={() => navigate(`/profile/${post.user._id}`)}
-            className="w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-r from-pink-500 to-indigo-500 text-white font-bold cursor-pointer"
+    <div className="post-card relative">
+      {/* === Dropdown Menu (only owner) === */}
+      {userId === post.user._id && (
+        <div className="absolute top-2 right-2">
+          <button
+            className="text-gray-200 hover:text-white"
+            onClick={() => setShowMenu((prev) => !prev)}
           >
-            {post.user.username[0].toUpperCase()}
+            <BsThreeDots size={18} />
+          </button>
+          {showMenu && (
+            <div className="absolute right-0 mt-2 bg-[#1E1E2E] border border-white/10 text-sm text-gray-200 rounded-md shadow-lg z-20">
+              <button
+                onClick={handleDelete}
+                className="block w-full text-left px-4 py-2 hover:bg-red-600 hover:text-white rounded-t-md"
+              >
+                🗑 Delete Post
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 🔹 Image Section */}
+      {post.images?.length > 0 && (
+        <div className="post-image-container">
+          <img
+            src={post.images[activeIndex]}
+            alt={`Post-${activeIndex}`}
+            className="post-image fadeIn"
+          />
+          {post.images.length > 1 && (
+            <>
+              <button className="carousel-btn left" onClick={prevImage}>
+                <FaChevronLeft />
+              </button>
+              <button className="carousel-btn right" onClick={nextImage}>
+                <FaChevronRight />
+              </button>
+              <div className="carousel-dots">
+                {post.images.map((_, i) => (
+                  <span
+                    key={i}
+                    className={`dot ${i === activeIndex ? "active" : ""}`}
+                  ></span>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Content */}
+      <div className="post-content">
+        {/* User Info */}
+        <div
+          className="post-user"
+          onClick={() => navigate(`/profile/${post.user._id}`)}
+        >
+          <img
+            src={post.user.avatar || "/default-avatar.png"}
+            className="user-avatar"
+            alt="avatar"
+          />
+          <div>
+            <p className="username">{post.user.username}</p>
+            <span className="timestamp">
+              {new Date(post.createdAt).toLocaleDateString()}
+            </span>
+          </div>
+        </div>
+
+        {/* Text */}
+        {post.text && <p className="post-text">{post.text}</p>}
+
+        {/* Tags */}
+        {post.tags?.length > 0 && (
+          <div className="tags">
+            {post.tags.map((tag, i) => (
+              <span key={i} className="tag">
+                #{tag}
+              </span>
+            ))}
           </div>
         )}
-        <div>
-          <p
-            onClick={() => navigate(`/profile/${post.user._id}`)}
-            className="font-semibold text-white cursor-pointer hover:underline"
+
+        {/* Reactions */}
+        <div className="actions">
+          <button
+            onClick={toggleLike}
+            className={`like-btn ${liked ? "liked pulse" : ""}`}
           >
-            {post.user.username}
-          </p>
-          <p className="text-xs text-gray-400">
-            {new Date(post.createdAt).toLocaleString()}
-          </p>
+            {liked ? <FaHeart /> : <FaRegHeart />}
+            <span>{likeCount}</span>
+          </button>
+          <button onClick={() => setShowComments(true)} className="comment-btn">
+            <FaCommentDots />
+            <span>{comments.length}</span>
+          </button>
         </div>
       </div>
 
-      {/* Post Image */}
-      {post.images?.length > 0 && (
-        <img
-          src={post.images[0]}
-          alt="Post"
-          className="w-full h-64 object-cover"
-        />
-      )}
-
-      {/* Post Content */}
-      {post.text && (
-        <p className="px-4 py-3 text-sm text-gray-200 whitespace-pre-line">
-          {post.text}
-        </p>
-      )}
-
-      {/* Tags */}
-      {post.tags?.length > 0 && (
-        <div className="flex flex-wrap gap-2 px-4 pb-2">
-          {post.tags.map((tag, i) => (
-            <span
-              key={i}
-              className="text-xs px-2 py-1 rounded-full bg-gradient-to-r from-pink-500 to-indigo-500 text-white"
-            >
-              #{tag}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {/* Reaction Bar */}
-      <div className="flex justify-between items-center px-4 py-3 border-t border-white/10">
-        <button
-          onClick={toggleLike}
-          className="flex items-center gap-2 text-gray-200 hover:scale-110 transition"
-        >
-          {liked ? (
-            <FaHeart className="text-red-500" />
-          ) : (
-            <FaRegHeart className="text-xl" />
-          )}
-          <span>{likeCount}</span>
-        </button>
-
-        <button
-          onClick={() => setShowComments((prev) => !prev)}
-          className="flex items-center gap-2 text-gray-200 hover:scale-110 transition"
-        >
-          <FaCommentDots className="text-blue-400" />
-          <span>{comments.length}</span>
-        </button>
-      </div>
-
-      {/* Comments */}
+      {/* 🔹 Comments Modal */}
       {showComments && (
-        <div className="px-4 py-3 space-y-2 bg-black/30 border-t border-white/10">
-          {comments.length > 0 ? (
-            comments.map((c, i) => (
-              <p key={i} className="text-sm text-gray-300">
-                <span className="font-semibold text-pink-400">
-                  @{c.user?.username}
-                </span>{" "}
-                {c.text}
-              </p>
-            ))
-          ) : (
-            <p className="text-sm text-gray-400 italic">No comments yet</p>
-          )}
+        <div className="comments-modal">
+          <div className="comments-content">
+            <button
+              className="close-btn"
+              onClick={() => setShowComments(false)}
+            >
+              ✖
+            </button>
+            <h3>Comments</h3>
+            <div className="comments-list">
+              {comments.length > 0 ? (
+                comments.map((c, i) => (
+                  <p key={i} className="comment">
+                    <span className="comment-user">@{c.user?.username}</span>{" "}
+                    {c.text}
+                  </p>
+                ))
+              ) : (
+                <p className="no-comments">No comments yet</p>
+              )}
+            </div>
+
+            <form onSubmit={handleCommentSubmit} className="comment-form">
+              <input
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder="Write comment..."
+              />
+              <button type="submit" disabled={commentLoading}>
+                {commentLoading ? "..." : "Send"}
+              </button>
+            </form>
+          </div>
         </div>
       )}
-
-      {/* Comment Input */}
-      <form
-        onSubmit={handleCommentSubmit}
-        className="flex items-center gap-2 p-3 border-t border-white/10"
-      >
-        <input
-          value={commentText}
-          onChange={(e) => setCommentText(e.target.value)}
-          placeholder="Write a comment..."
-          className="flex-1 px-3 py-2 rounded-full bg-[#2A2A3B] text-white text-sm focus:outline-none"
-        />
-        <button
-          type="submit"
-          disabled={commentLoading}
-          className="px-4 py-2 rounded-full bg-gradient-to-r from-pink-500 to-indigo-500 text-white text-sm disabled:opacity-50"
-        >
-          {commentLoading ? "..." : "Post"}
-        </button>
-      </form>
     </div>
   );
 };
