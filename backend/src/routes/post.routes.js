@@ -7,6 +7,7 @@ const {
   updatePost, // 👈 Add this
   getUserPosts,
   deletePost, // 👈 Add this
+  getTrendingPosts,
 } = require("../controllers/post.controller");
 
 const requireAuth = require("../middlewares/auth.middleware");
@@ -16,7 +17,7 @@ const upload = multer({ dest: "src/uploads/temp", limits: { files: 3 } });
 router.post("/", requireAuth, upload.array("images", 3), createPost);
 router.get("/", requireAuth, getAllPosts);
 router.get("/user/:id", requireAuth, getUserPosts);
-
+router.get("/trending", auth, getTrendingPosts);
 router.put("/:id", requireAuth, updatePost);
 router.delete("/:id", requireAuth, deletePost);
 

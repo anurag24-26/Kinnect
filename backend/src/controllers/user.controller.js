@@ -16,6 +16,31 @@ exports.getUserProfile = async (req, res) => {
       .json({ message: "Failed to fetch user", error: err.message });
   }
 };
+// GET /api/users/suggestions
+exports.getSuggestions = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get current user (to know who they already follow)
+    const currentUser = await User.findById(userId).select("following");
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Exclude self + already-following users
+    const excludeIds = [...currentUser.following, userId];
+
+    // Find other users, sorted by newest, limit to 10
+    const suggestions = await User.find({ _id: { $nin: excludeIds } })
+      .select("username avatar bio")
+      .sort({ createdAt: -1 })
+      .limit(10);
+
+    res.json({ suggestions });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch suggestions", error: err.message });
+  }
+};
 
 // GET /api/users/me
 exports.getCurrentUser = async (req, res) => {

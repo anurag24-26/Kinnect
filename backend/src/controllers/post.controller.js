@@ -101,3 +101,31 @@ exports.deletePost = async (req, res) => {
       .json({ message: "Failed to delete post", error: error.message });
   }
 };
+
+// GET /api/posts/trending
+exports.getTrendingPosts = async (req, res) => {
+  try {
+    const posts = await Post.find()
+      .populate("user", "username avatar")
+      .sort({ createdAt: -1 }) // fallback if likes are equal
+      .lean();
+
+    // Sort manually by number of likes (descending)
+    const trending = posts.sort((a, b) => {
+      const likesA = a.likes?.length || 0;
+      const likesB = b.likes?.length || 0;
+
+      // If likes are equal, sort by creation date (newer first)
+      if (likesA === likesB) {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+      return likesB - likesA;
+    });
+
+    res.status(200).json(trending.slice(0, 20)); // limit to top 20 trending
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: "Failed to fetch trending posts", error: err.message });
+  }
+};
