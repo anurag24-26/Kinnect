@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FiUserPlus } from "react-icons/fi";
+
+import Logo from "../assets/kinnectlogo.png";
 
 const Register = () => {
   const [form, setForm] = useState({ username: "", email: "", password: "" });
@@ -38,10 +39,18 @@ const Register = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#16161A] text-[#FFFFFE] px-4">
       <div className="w-full max-w-md bg-[#1F1F24] p-8 rounded-2xl shadow-lg border border-[#2CB67D]/20">
-        
+
+        {/* Logo */}
+        <div className="flex justify-center mb-6">
+          <img
+            src={Logo}
+            alt="Kinnect Logo"
+            className="h-20 md:h-24 object-contain drop-shadow-lg"
+          />
+        </div>
+
         {/* Title */}
-        <div className="flex items-center gap-2 mb-6">
-          <FiUserPlus className="text-2xl text-transparent bg-clip-text bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D]" />
+        <div className="flex items-center gap-2 mb-6 justify-center">
           <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D]">
             Create Your Account
           </h2>
@@ -62,7 +71,7 @@ const Register = () => {
             value={form.username}
             onChange={handleChange}
             required
-            className={`w-full p-3 rounded-lg bg-[#2A2A30] border border-transparent focus:border-[#7F5AF0] focus:ring-2 focus:ring-[#7F5AF0]/50 outline-none`}
+            className="w-full p-3 rounded-lg bg-[#2A2A30] border border-transparent focus:border-[#7F5AF0] focus:ring-2 focus:ring-[#7F5AF0]/50 outline-none"
           />
           <input
             name="email"

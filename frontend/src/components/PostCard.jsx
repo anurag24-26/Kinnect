@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { FaHeart, FaRegHeart, FaCommentDots } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Slider from "react-slick";
 import axios from "axios";
 
@@ -14,6 +14,7 @@ const PostCard = ({ post }) => {
   const [showComments, setShowComments] = useState(false);
 
   const token = localStorage.getItem("token");
+  const navigate = useNavigate();
 
   // --- API Calls ---
   const fetchLikeStatus = async () => {
@@ -95,28 +96,49 @@ const PostCard = ({ post }) => {
     arrows: post.images?.length > 1,
   };
 
+  // --- Navigation logic ---
+  const handlePostClick = () => {
+    navigate(`/profile/${post.user._id}/post/${post._id}`);
+  };
+
   return (
-    <div className="bg-gradient-to-br from-purple-800/90 via-indigo-900/80 to-black/90 rounded-3xl shadow-2xl border border-white/20 overflow-hidden transition-all hover:shadow-aurora hover:scale-[1.02] duration-500 max-w-3xl mx-auto mb-12">
+    <div
+      onClick={handlePostClick}
+      className="cursor-pointer bg-gradient-to-br from-purple-800/90 via-indigo-900/80 to-black/90 rounded-3xl shadow-2xl border border-white/20 overflow-hidden transition-all hover:shadow-aurora hover:scale-[1.02] duration-500 max-w-3xl mx-auto mb-12"
+    >
       {/* Header */}
       <div className="flex items-center gap-6 p-6 border-b border-white/20">
         {post.user.avatar ? (
           <img
             src={post.user.avatar}
             alt="User Avatar"
-            className="h-16 w-16 rounded-full object-cover ring-4 ring-transparent bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-500 p-[2px]"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/profile/${post.user._id}`);
+            }}
+            className="h-16 w-16 rounded-full object-cover ring-4 ring-transparent bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-500 p-[2px] cursor-pointer"
           />
         ) : (
-          <div className="h-16 w-16 rounded-full flex items-center justify-center text-2xl text-white font-bold bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-500">
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/profile/${post.user._id}`);
+            }}
+            className="h-16 w-16 rounded-full flex items-center justify-center text-2xl text-white font-bold bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-500 cursor-pointer"
+          >
             {post.user.username[0].toUpperCase()}
           </div>
         )}
         <div className="flex flex-col">
-          <Link
-            to={`/profile/${post.user._id}`}
-            className="font-bold text-lg text-white hover:underline"
+          <span
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/profile/${post.user._id}`);
+            }}
+            className="font-bold text-lg text-white hover:underline cursor-pointer"
           >
             {post.user.username}
-          </Link>
+          </span>
           <span className="text-sm text-gray-300">
             {new Date(post.createdAt).toLocaleString()}
           </span>
@@ -170,7 +192,10 @@ const PostCard = ({ post }) => {
       )}
 
       {/* Reaction Bar */}
-      <div className="flex justify-between items-center px-6 py-4 border-t border-white/20">
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="flex justify-between items-center px-6 py-4 border-t border-white/20"
+      >
         <button
           onClick={toggleLike}
           className="flex items-center gap-3 text-gray-200 hover:scale-125 transition"
@@ -201,7 +226,10 @@ const PostCard = ({ post }) => {
                 key={i}
                 className="text-sm text-gray-200 border-l-4 pl-4 border-indigo-400/60"
               >
-                <span className="font-semibold text-pink-400">@{comment.user?.username}</span>: {comment.text}
+                <span className="font-semibold text-pink-400">
+                  @{comment.user?.username}
+                </span>
+                : {comment.text}
               </div>
             ))
           ) : (
@@ -212,6 +240,7 @@ const PostCard = ({ post }) => {
 
       {/* Comment Form */}
       <form
+        onClick={(e) => e.stopPropagation()}
         onSubmit={handleCommentSubmit}
         className="flex items-center gap-3 p-6 border-t border-white/20"
       >

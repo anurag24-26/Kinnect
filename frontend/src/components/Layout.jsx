@@ -15,6 +15,7 @@ import { BiMessageDetail } from "react-icons/bi";
 import { HiMenuAlt3, HiX } from "react-icons/hi";
 import { useAuth } from "../contexts/AuthContexts";
 import NotificationBell from "./NotificationBell";
+import Logo from "../assets/kinnectlogo.png";
 
 const Layout = () => {
   const { user, logout, loading } = useAuth();
@@ -50,11 +51,15 @@ const Layout = () => {
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#16161A]/80 backdrop-blur-md border-b border-[#2CB67D]/30 shadow-lg">
         <div className="max-w-7xl mx-auto flex justify-between items-center px-4 py-3 md:px-6">
           {/* Logo */}
-          <Link
-            to="/"
-            className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] bg-clip-text text-transparent hover:opacity-90 transition"
-          >
-            Kinnect
+          <Link to="/" className="flex items-center gap-2">
+            <img
+              src={Logo}
+              alt="Kinnect Logo"
+              className="h-10 w-auto object-contain"
+            />
+            <span className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] bg-clip-text text-transparent hover:opacity-90 transition">
+              Kinnect
+            </span>
           </Link>
 
           {/* Desktop Search */}

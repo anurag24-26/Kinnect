@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
-import { FiLogIn } from "react-icons/fi";
+
 import { useAuth } from "../contexts/AuthContexts";
 import Logo from "../assets/kinnectlogo.png";
 
@@ -40,13 +40,16 @@ const Login = () => {
         
         {/* Logo */}
         <div className="flex justify-center mb-6">
-          <img src={Logo} alt="Kinnect Logo" className="h-14" />
+          <img 
+            src={Logo} 
+            alt="Kinnect Logo" 
+            className="h-20 md:h-24 object-contain drop-shadow-lg"
+          />
         </div>
 
         {/* Title */}
-        <div className="flex items-center gap-2 mb-6">
-          <FiLogIn className="text-2xl text-transparent bg-clip-text bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D]" />
-          <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D]">
+        <div className="flex items-center gap-2 mb-6 justify-center">
+         <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D]">
             Welcome Back
           </h2>
         </div>
