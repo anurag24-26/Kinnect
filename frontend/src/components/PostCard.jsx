@@ -1,17 +1,15 @@
 import { useEffect, useState } from "react";
 import { FaHeart, FaRegHeart, FaCommentDots } from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom";
-import Slider from "react-slick";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const PostCard = ({ post }) => {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
-  const [commentText, setCommentText] = useState("");
-  const [commentLoading, setCommentLoading] = useState(false);
-  const [commentError, setCommentError] = useState("");
   const [comments, setComments] = useState(post.comments || []);
   const [showComments, setShowComments] = useState(false);
+  const [commentText, setCommentText] = useState("");
+  const [commentLoading, setCommentLoading] = useState(false);
 
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
@@ -73,7 +71,7 @@ const PostCard = ({ post }) => {
       fetchComments();
       setShowComments(true);
     } catch {
-      setCommentError("Failed to post comment");
+      console.error("❌ Failed to post comment");
     } finally {
       setCommentLoading(false);
     }
@@ -87,103 +85,61 @@ const PostCard = ({ post }) => {
     }
   }, [post._id]);
 
-  const sliderSettings = {
-    dots: true,
-    infinite: false,
-    speed: 500,
-    slidesToShow: 1,
-    slidesToScroll: 1,
-    arrows: post.images?.length > 1,
-  };
-
-  // --- Navigation logic ---
-  const handlePostClick = () => {
-    navigate(`/profile/${post.user._id}/post/${post._id}`);
-  };
-
   return (
-    <div
-      onClick={handlePostClick}
-      className="cursor-pointer bg-gradient-to-br from-purple-800/90 via-indigo-900/80 to-black/90 rounded-3xl shadow-2xl border border-white/20 overflow-hidden transition-all hover:shadow-aurora hover:scale-[1.02] duration-500 max-w-3xl mx-auto mb-12"
-    >
-      {/* Header */}
-      <div className="flex items-center gap-6 p-6 border-b border-white/20">
-        {post.user.avatar ? (
+    <div className="bg-[#1E1E2E] rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all border border-white/10">
+      {/* User Info */}
+      <div className="flex items-center gap-3 p-4 border-b border-white/10">
+        {post.user?.avatar ? (
           <img
             src={post.user.avatar}
-            alt="User Avatar"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/profile/${post.user._id}`);
-            }}
-            className="h-16 w-16 rounded-full object-cover ring-4 ring-transparent bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-500 p-[2px] cursor-pointer"
+            alt="avatar"
+            onClick={() => navigate(`/profile/${post.user._id}`)}
+            className="w-12 h-12 rounded-full object-cover cursor-pointer"
           />
         ) : (
           <div
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/profile/${post.user._id}`);
-            }}
-            className="h-16 w-16 rounded-full flex items-center justify-center text-2xl text-white font-bold bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-500 cursor-pointer"
+            onClick={() => navigate(`/profile/${post.user._id}`)}
+            className="w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-r from-pink-500 to-indigo-500 text-white font-bold cursor-pointer"
           >
             {post.user.username[0].toUpperCase()}
           </div>
         )}
-        <div className="flex flex-col">
-          <span
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/profile/${post.user._id}`);
-            }}
-            className="font-bold text-lg text-white hover:underline cursor-pointer"
+        <div>
+          <p
+            onClick={() => navigate(`/profile/${post.user._id}`)}
+            className="font-semibold text-white cursor-pointer hover:underline"
           >
             {post.user.username}
-          </span>
-          <span className="text-sm text-gray-300">
+          </p>
+          <p className="text-xs text-gray-400">
             {new Date(post.createdAt).toLocaleString()}
-          </span>
+          </p>
         </div>
       </div>
 
-      {/* Content */}
+      {/* Post Image */}
+      {post.images?.length > 0 && (
+        <img
+          src={post.images[0]}
+          alt="Post"
+          className="w-full h-64 object-cover"
+        />
+      )}
+
+      {/* Post Content */}
       {post.text && (
-        <p className="px-6 py-6 text-lg text-gray-100 leading-relaxed whitespace-pre-line">
+        <p className="px-4 py-3 text-sm text-gray-200 whitespace-pre-line">
           {post.text}
         </p>
       )}
 
-      {/* Images */}
-      {post.images?.length > 0 && (
-        <div className="rounded-xl overflow-hidden">
-          {post.images.length === 1 ? (
-            <img
-              src={post.images[0]}
-              alt="Post"
-              className="object-cover w-full max-h-[600px]"
-            />
-          ) : (
-            <Slider {...sliderSettings}>
-              {post.images.map((img, idx) => (
-                <div key={idx}>
-                  <img
-                    src={img}
-                    alt={`Post ${idx}`}
-                    className="object-cover w-full max-h-[600px]"
-                  />
-                </div>
-              ))}
-            </Slider>
-          )}
-        </div>
-      )}
-
       {/* Tags */}
-      {Array.isArray(post.tags) && post.tags.length > 0 && (
-        <div className="flex flex-wrap gap-3 px-6 py-4 border-t border-white/20">
+      {post.tags?.length > 0 && (
+        <div className="flex flex-wrap gap-2 px-4 pb-2">
           {post.tags.map((tag, i) => (
             <span
               key={i}
-              className="text-sm px-4 py-2 rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white shadow-md"
+              className="text-xs px-2 py-1 rounded-full bg-gradient-to-r from-pink-500 to-indigo-500 text-white"
             >
               #{tag}
             </span>
@@ -192,45 +148,39 @@ const PostCard = ({ post }) => {
       )}
 
       {/* Reaction Bar */}
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="flex justify-between items-center px-6 py-4 border-t border-white/20"
-      >
+      <div className="flex justify-between items-center px-4 py-3 border-t border-white/10">
         <button
           onClick={toggleLike}
-          className="flex items-center gap-3 text-gray-200 hover:scale-125 transition"
+          className="flex items-center gap-2 text-gray-200 hover:scale-110 transition"
         >
           {liked ? (
-            <FaHeart className="text-red-500 text-2xl" />
+            <FaHeart className="text-red-500" />
           ) : (
-            <FaRegHeart className="text-2xl" />
+            <FaRegHeart className="text-xl" />
           )}
-          <span className="text-lg">{likeCount}</span>
+          <span>{likeCount}</span>
         </button>
 
         <button
           onClick={() => setShowComments((prev) => !prev)}
-          className="flex items-center gap-3 text-gray-200 hover:scale-110 transition"
+          className="flex items-center gap-2 text-gray-200 hover:scale-110 transition"
         >
-          <FaCommentDots className="text-blue-400 text-2xl" />
-          <span className="text-lg">{comments.length}</span>
+          <FaCommentDots className="text-blue-400" />
+          <span>{comments.length}</span>
         </button>
       </div>
 
-      {/* Comments Section */}
+      {/* Comments */}
       {showComments && (
-        <div className="px-6 py-5 bg-black/40 backdrop-blur-md space-y-4 animate-fadeIn">
+        <div className="px-4 py-3 space-y-2 bg-black/30 border-t border-white/10">
           {comments.length > 0 ? (
-            comments.map((comment, i) => (
-              <div
-                key={i}
-                className="text-sm text-gray-200 border-l-4 pl-4 border-indigo-400/60"
-              >
+            comments.map((c, i) => (
+              <p key={i} className="text-sm text-gray-300">
                 <span className="font-semibold text-pink-400">
-                  @{comment.user?.username}
-                </span>
-                : {comment.text}
-              </div>
+                  @{c.user?.username}
+                </span>{" "}
+                {c.text}
+              </p>
             ))
           ) : (
             <p className="text-sm text-gray-400 italic">No comments yet</p>
@@ -238,30 +188,25 @@ const PostCard = ({ post }) => {
         </div>
       )}
 
-      {/* Comment Form */}
+      {/* Comment Input */}
       <form
-        onClick={(e) => e.stopPropagation()}
         onSubmit={handleCommentSubmit}
-        className="flex items-center gap-3 p-6 border-t border-white/20"
+        className="flex items-center gap-2 p-3 border-t border-white/10"
       >
         <input
           value={commentText}
           onChange={(e) => setCommentText(e.target.value)}
           placeholder="Write a comment..."
-          className="flex-1 px-5 py-3 text-base rounded-full border border-gray-500 bg-black/40 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400"
+          className="flex-1 px-3 py-2 rounded-full bg-[#2A2A3B] text-white text-sm focus:outline-none"
         />
         <button
           type="submit"
           disabled={commentLoading}
-          className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white px-6 py-3 text-base rounded-full shadow-lg hover:opacity-90 transition disabled:opacity-50"
+          className="px-4 py-2 rounded-full bg-gradient-to-r from-pink-500 to-indigo-500 text-white text-sm disabled:opacity-50"
         >
           {commentLoading ? "..." : "Post"}
         </button>
       </form>
-
-      {commentError && (
-        <p className="text-red-400 text-sm px-6 pb-5">{commentError}</p>
-      )}
     </div>
   );
 };

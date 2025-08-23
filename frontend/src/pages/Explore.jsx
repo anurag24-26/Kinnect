@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { FaHeart, FaUserPlus } from "react-icons/fa";
+import PostCard from "../components/PostCard"; // make sure path is correct
+import { FaUserPlus } from "react-icons/fa";
 
 const Explore = () => {
   const [trendingPosts, setTrendingPosts] = useState([]);
@@ -10,17 +11,6 @@ const Explore = () => {
 
   const token = localStorage.getItem("token");
   const loggedInUserId = localStorage.getItem("userId");
-
-  // Fetch like status + count for a post
- const fetchLikeStatus = async () => {
-    try {
-      const res = await axios.get(
-        `https://kinnectbackend.onrender.com/api/likes/${post._id}/status`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setLiked(res.data.liked);
-    } catch {}
-  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -33,21 +23,9 @@ const Explore = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        let postsWithLikes = [];
+        setTrendingPosts(postsRes.data || []);
 
-        // 2. For each post, fetch like status + count
-        for (const post of postsRes.data || []) {
-          const likeData = await fetchLikes(post._id);
-          postsWithLikes.push({
-            ...post,
-            likes: likeData.likes,
-            likedByMe: likeData.liked,
-          });
-        }
-
-        setTrendingPosts(postsWithLikes);
-
-        // 3. Fetch suggested users
+        // 2. Fetch suggested users
         if (loggedInUserId) {
           const usersRes = await axios.get(
             `https://kinnectbackend.onrender.com/api/users/suggested/${loggedInUserId}`,
@@ -71,53 +49,26 @@ const Explore = () => {
   if (error) return <p className="text-center text-red-400">{error}</p>;
 
   return (
-    <div className="max-w-5xl mx-auto p-6 text-[#FFFFFE]">
+    <div className="max-w-6xl mx-auto p-6 text-[#FFFFFE]">
       {/* Trending Posts */}
-      <section className="mb-10">
-        <h2 className="text-2xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D]">
+      <section className="mb-12">
+        <h2 className="text-3xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D]">
           🔥 Trending Posts
         </h2>
-        <div className="grid md:grid-cols-2 gap-6">
-          {trendingPosts.length > 0 ? (
-            trendingPosts.map((post) => (
-              <div
-                key={post._id}
-                className="bg-[#1F1F24] rounded-2xl p-5 border border-[#2CB67D]/20 shadow-lg hover:shadow-2xl transition-all"
-              >
-                <h3 className="font-semibold text-[#FFFFFE]">
-                  {post.user?.username}
-                </h3>
-                <p className="text-[#94A1B2] mt-2">{post.text}</p>
-
-                {post.images && post.images.length > 0 && (
-                  <div className="mt-4">
-                    <img
-                      src={post.images[0]}
-                      alt="Post"
-                      className="rounded-xl w-full h-64 object-cover sm:h-72 md:h-80 lg:h-96"
-                      loading="lazy"
-                    />
-                  </div>
-                )}
-
-                {/* Likes (just fetched, no toggle) */}
-                <div className="flex items-center gap-3 mt-4 text-[#94A1B2]">
-                  <FaHeart
-                    className={post.likedByMe ? "text-red-500" : "text-gray-400"}
-                  />
-                  <span>{post.likes?.length || 0}</span>
-                </div>
-              </div>
-            ))
-          ) : (
-            <p className="text-[#94A1B2]">No trending posts found.</p>
-          )}
-        </div>
+        {trendingPosts.length > 0 ? (
+          <div className="flex flex-col gap-10">
+            {trendingPosts.map((post) => (
+              <PostCard key={post._id} post={post} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-[#94A1B2]">No trending posts found.</p>
+        )}
       </section>
 
       {/* Suggested Users */}
       <section>
-        <h2 className="text-2xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-[#7F5AF0] to-[#FF8906]">
+        <h2 className="text-3xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-[#7F5AF0] to-[#FF8906]">
           ✨ Suggested Users
         </h2>
         <div className="grid md:grid-cols-3 gap-6">
