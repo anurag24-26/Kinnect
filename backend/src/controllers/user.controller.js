@@ -1,6 +1,10 @@
 const User = require("../models/user.model");
 const cloudinary = require("../config/cloudinary");
 
+const bcrypt = require("bcryptjs");
+
+// PUT /api/users/update-password
+
 // GET /api/users/:id
 exports.getUserProfile = async (req, res) => {
   try {
@@ -139,5 +143,27 @@ exports.updateAvatar = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: "Avatar update failed", error: error.message });
+  }
+};
+
+exports.updatePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Both current and new password required" });
+    }
+
+    const user = await User.findById(req.user.id).select("+password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) return res.status(400).json({ message: "Current password is incorrect" });
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    res.json({ message: "Password updated successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Password update failed", error: err.message });
   }
 };
