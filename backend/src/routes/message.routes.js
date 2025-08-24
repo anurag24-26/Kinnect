@@ -21,6 +21,7 @@ router.get("/:user1/:user2", async (req, res) => {
   }
 });
 
+// Get online status + last seen
 router.get("/:id/status", async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select("isOnline lastSeen");
@@ -31,4 +32,26 @@ router.get("/:id/status", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
+// Update message status (optional REST API)
+router.patch("/:id/status", async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!["sent", "delivered", "read"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const updated = await Message.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+
+    if (!updated) return res.status(404).json({ message: "Message not found" });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to update status" });
+  }
+});
+
 module.exports = router;
