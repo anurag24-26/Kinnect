@@ -9,7 +9,7 @@ import {
 import { BsThreeDots } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import "./postcard.css"; // your CSS for grid + animations
+import "./PostCard.css"; // your CSS for grid + animations
 
 const PostCard = ({ post, onDelete }) => {
   const [liked, setLiked] = useState(false);
