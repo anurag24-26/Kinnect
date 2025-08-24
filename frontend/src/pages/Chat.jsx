@@ -3,6 +3,7 @@ import axios from "axios";
 import io from "socket.io-client";
 import { FaCircle, FaPaperPlane, FaSmile } from "react-icons/fa";
 import { IoArrowBack } from "react-icons/io5";
+import { BsCheck, BsCheckAll } from "react-icons/bs";
 
 // ✅ Single socket instance
 const socket = io("https://kinnectbackend.onrender.com", {
@@ -31,6 +32,7 @@ const Chat = () => {
   const [message, setMessage] = useState("");
   const [typingUsers, setTypingUsers] = useState({});
   const [loadingChat, setLoadingChat] = useState(false);
+  const [replyTo, setReplyTo] = useState(null);
 
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [unreadMessages, setUnreadMessages] = useState({});
@@ -87,10 +89,7 @@ const Chat = () => {
           );
         });
 
-        // Notify backend it's delivered
         socket.emit("messageDelivered", { messageId: data._id });
-
-        // If chat is open, mark as read
         socket.emit("messageRead", { messageId: data._id });
       }
 
@@ -103,7 +102,6 @@ const Chat = () => {
           [data.senderId]: (prev[data.senderId] || 0) + 1,
         }));
 
-        // Mark delivered if not in open thread
         socket.emit("messageDelivered", { messageId: data._id });
       }
     };
@@ -177,7 +175,6 @@ const Chat = () => {
       );
       setChat(sorted);
 
-      // Mark all as read
       sorted.forEach((msg) => {
         if (msg.receiverId === currentUserId && msg.status !== "read") {
           socket.emit("messageRead", { messageId: msg._id });
@@ -196,7 +193,7 @@ const Chat = () => {
     );
   };
 
-  // ✅ Send message
+  // ✅ Send message (with reply support)
   const handleSendMessage = () => {
     if (!selectedAccount || !message.trim()) return;
 
@@ -209,6 +206,7 @@ const Chat = () => {
       createdAt: new Date().toISOString(),
       status: "sent",
       optimistic: true,
+      replyTo: replyTo ? { _id: replyTo._id, message: replyTo.message } : null,
     };
 
     setChat((prev) => [...prev, optimistic]);
@@ -220,6 +218,7 @@ const Chat = () => {
         senderId: currentUserId,
         receiverId: selectedAccount.id,
         message: optimistic.message,
+        replyTo: replyTo ? replyTo._id : null,
       },
       (ack) => {
         if (ack?.success && ack.message) {
@@ -241,6 +240,7 @@ const Chat = () => {
         }
       }
     );
+    setReplyTo(null);
   };
 
   // ✅ Typing debounce
@@ -260,223 +260,244 @@ const Chat = () => {
 
   const isUserOnline = (userId) => onlineUsers.has(userId);
 
-  // ✅ Render tick marks based on message status
+  // ✅ Render tick marks
   const renderTicks = (msg) => {
     if (msg.failed) return " • failed";
     if (msg.optimistic) return " • sending…";
+    if (msg.senderId !== currentUserId) return "";
 
-    if (msg.senderId !== currentUserId) return ""; // only for sender
-
-    if (msg.status === "sent") return " ✓";
-    if (msg.status === "delivered") return " ✓";
-    if (msg.status === "read") return " ✓✓";
+    if (msg.status === "sent") return <BsCheck className="inline text-gray-400" />;
+    if (msg.status === "delivered") return <BsCheckAll className="inline text-gray-400" />;
+    if (msg.status === "read") return <BsCheckAll className="inline text-blue-500" />;
     return "";
   };
 
   return (
-    <div className="flex h-[80dvh] overflow-hidden bg-[#0B1220] text-[#E6F1FF] font-inter">
-      {/* Sidebar */}
-      <aside
-        className={`${
-          mobileView && selectedAccount ? "hidden" : "flex"
-        } flex-col w-full md:w-1/3 md:max-w-xs border-r border-white/10`}
-      >
-        <div className="p-4 bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] text-white font-bold text-lg shadow-md">
-          Messages
-        </div>
+  <div className="flex h-[90dvh] overflow-hidden bg-gradient-to-br from-[#0B1220] via-[#121a2f] to-[#1C2333] text-[#E6F1FF] font-inter rounded-xl shadow-xl">
+  {/* Sidebar */}
+  <aside
+    className={`${
+      mobileView && selectedAccount ? "hidden" : "flex"
+    } flex-col w-full md:w-1/3 lg:w-1/4 border-r border-white/10 backdrop-blur-md bg-white/5`}
+  >
+    {/* Sidebar Header */}
+    <div className="p-3.5 text-center font-bold text-lg text-white bg-gradient-to-r from-[#9682cf] to-[#7F5AF0] shadow-md rounded-tl-3xl">
+      💬 Messages
+    </div>
 
-        <div className="overflow-y-auto flex-1 p-2">
-          {accounts.length === 0 ? (
-            <p className="text-[#8DA2C0] text-center mt-20">
-              Follow someone to start chatting
-            </p>
-          ) : (
-            <ul className="space-y-2">
-              {accounts.map((acc) => (
-                <li
-                  key={acc.id}
-                  onClick={() => handleAccountClick(acc)}
-                  className={`flex items-center justify-between px-3 py-2 cursor-pointer rounded-2xl transition-all hover:bg-white/5 ${
-                    selectedAccount?.id === acc.id
-                      ? "bg-white/10 ring-1 ring-white/15"
-                      : "bg-transparent"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      {acc.avatar ? (
-                        <img
-                          src={acc.avatar}
-                          alt={acc.name}
-                          className="h-10 w-10 rounded-full object-cover border-2 border-transparent"
-                          style={{
-                            borderImage:
-                              "linear-gradient(45deg,#7F5AF0,#2CB67D) 1",
-                          }}
-                        />
-                      ) : (
-                        <div className="h-10 w-10 rounded-full bg-[#7F5AF0]/30 flex items-center justify-center font-bold text-[#7F5AF0]">
-                          {acc.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                      <FaCircle
-                        className={`absolute bottom-0 right-0 text-[10px] ${
-                          isUserOnline(acc.id)
-                            ? "text-[#2CB67D]"
-                            : "text-[#8DA2C0]"
-                        }`}
-                      />
+    {/* Users List */}
+    <div className="overflow-y-auto flex-1 p-3 space-y-2">
+      {accounts.length === 0 ? (
+        <p className="text-[#8DA2C0] text-center mt-20">
+          Follow someone to start chatting
+        </p>
+      ) : (
+        <ul className="space-y-2">
+          {accounts.map((acc) => (
+            <li
+              key={acc.id}
+              onClick={() => handleAccountClick(acc)}
+              className={`flex items-center justify-between p-3 cursor-pointer rounded-xl transition-all backdrop-blur hover:bg-white/10 ${
+                selectedAccount?.id === acc.id
+                  ? "bg-gradient-to-r from-[#7F5AF0]/30 to-[#2CB67D]/30"
+                  : ""
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  {acc.avatar ? (
+                    <img
+                      src={acc.avatar}
+                      alt={acc.name}
+                      className="h-10 w-10 rounded-full object-cover border border-[#2CB67D]/40 shadow-md"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-[#7F5AF0]/40 flex items-center justify-center font-bold text-white shadow">
+                      {acc.name.charAt(0).toUpperCase()}
                     </div>
-                    <div>
-                      <p className="font-medium leading-tight">{acc.name}</p>
-                      <p className="text-xs text-[#8DA2C0] leading-tight">
-                        {isUserOnline(acc.id) ? "Online" : "Tap to chat"}
-                      </p>
-                    </div>
-                  </div>
-                  {unreadMessages[acc.id] && (
-                    <span className="bg-[#E63946] text-white text-xs px-2 py-0.5 rounded-full">
-                      {unreadMessages[acc.id]}
-                    </span>
                   )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </aside>
-
-      {/* Chat Panel */}
-      <main
-        className={`flex-1 flex flex-col ${
-          mobileView && !selectedAccount ? "hidden" : "flex"
-        }`}
-      >
-        {selectedAccount ? (
-          <>
-            {/* Header */}
-            <header className="flex items-center p-4 bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] text-white shadow-lg">
-              {mobileView && (
-                <button
-                  onClick={() => setSelectedAccount(null)}
-                  className="mr-3 text-2xl hover:scale-105 transition"
-                >
-                  <IoArrowBack />
-                </button>
-              )}
-              <div className="flex items-center gap-2">
-                {selectedAccount.avatar ? (
-                  <img
-                    src={selectedAccount.avatar}
-                    alt={selectedAccount.name}
-                    className="h-8 w-8 rounded-full object-cover border-2 border-transparent"
-                    style={{
-                      borderImage: "linear-gradient(45deg,#7F5AF0,#2CB67D) 1",
-                    }}
+                  <FaCircle
+                    className={`absolute bottom-0 right-0 text-[10px] ${
+                      isUserOnline(acc.id) ? "text-[#2CB67D]" : "text-[#8DA2C0]"
+                    }`}
                   />
-                ) : (
-                  <div className="h-8 w-8 rounded-full bg-[#7F5AF0]/30 flex items-center justify-center font-bold text-[#FFFFFE]">
-                    {selectedAccount.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <span className="font-semibold">{selectedAccount.name}</span>
-                {isUserOnline(selectedAccount.id) && (
-                  <FaCircle className="text-[#2CB67D] text-[8px]" />
-                )}
+                </div>
+                <div>
+                  <p className="font-semibold">{acc.name}</p>
+                  <p className="text-xs text-[#8DA2C0]">
+                    {isUserOnline(acc.id) ? "Online" : "Tap to chat"}
+                  </p>
+                </div>
               </div>
-            </header>
-
-            {/* Messages */}
-            <section className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
-              {loadingChat ? (
-                <div className="flex justify-center items-center h-full text-[#8DA2C0] animate-pulse">
-                  Loading messages...
-                </div>
-              ) : chat.length > 0 ? (
-                chat.map((msg) => {
-                  const isSender =
-                    msg.senderId === currentUserId ||
-                    msg.senderId?._id === currentUserId;
-                  return (
-                    <div
-                      key={msg._id}
-                      className={`flex ${
-                        isSender ? "justify-end" : "justify-start"
-                      }`}
-                    >
-                      <div
-                        className={`px-4 py-2 max-w-[70%] rounded-2xl shadow ${
-                          isSender
-                            ? "bg-gradient-to-r from-[#84ac84] to-[#70a1698a] text-black"
-                            : "bg-[#bdc3cf] text-[#000000]"
-                        }`}
-                      >
-                        <div className="whitespace-pre-wrap break-words">
-                          {msg.message}
-                        </div>
-                        <div className="text-[10px] opacity-70 mt-1 text-right">
-                          {new Date(msg.createdAt).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                          {renderTicks(msg)}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="flex justify-center text-[#8DA2C0]">
-                  No messages yet
-                </div>
+              {unreadMessages[acc.id] && (
+                <span className="bg-[#E63946] text-white text-xs min-w-[20px] px-2 py-0.5 rounded-full flex items-center justify-center shadow">
+                  {unreadMessages[acc.id]}
+                </span>
               )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  </aside>
 
-              {/* Typing dots */}
-              {!loadingChat && typingUsers[selectedAccount?.id] && (
-                <div className="flex gap-1 items-center pl-1">
-                  <span className="w-2 h-2 bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] rounded-full animate-bounce"></span>
-                  <span className="w-2 h-2 bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] rounded-full animate-bounce delay-100"></span>
-                  <span className="w-2 h-2 bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] rounded-full animate-bounce delay-200"></span>
-                </div>
-              )}
-              <div ref={bottomRef} />
-            </section>
-
-            {/* Input */}
-            <footer className="p-3 bg-[#0F172A] flex gap-2 items-center border-t border-white/10">
-              <button
-                className="text-[#FF8906] text-xl hover:scale-110 transition"
-                title="Emojis (stub)"
-              >
-                <FaSmile />
-              </button>
-              <input
-                type="text"
-                value={message}
-                disabled={loadingChat}
-                onChange={(e) => {
-                  setMessage(e.target.value);
-                  handleTyping();
-                }}
-                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                placeholder="Type your message..."
-                className="flex-1 bg-[#0B1220] border border-white/10 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2CB67D]"
+  {/* Chat Panel */}
+  <main
+    className={`flex-1 flex flex-col ${
+      mobileView && !selectedAccount ? "hidden" : "flex"
+    }`}
+  >
+    {selectedAccount ? (
+      <>
+        {/* Chat Header */}
+        <header className="flex items-center gap-3 p-2 bg-gradient-to-r from-[#7F5AF0] to-[#124772] text-white shadow-md rounded-tr-3xl">
+          {mobileView && (
+            <button
+              onClick={() => setSelectedAccount(null)}
+              className="mr-2 text-xl hover:scale-110 transition-transform"
+            >
+              <IoArrowBack />
+            </button>
+          )}
+          <div className="flex items-center gap-3">
+            {selectedAccount.avatar ? (
+              <img
+                src={selectedAccount.avatar}
+                alt={selectedAccount.name}
+                className="h-9 w-9 rounded-full object-cover border border-white/30 shadow"
               />
-              <button
-                onClick={handleSendMessage}
-                className="bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] px-4 py-2 rounded-full text-white text-sm flex items-center gap-1 hover:scale-105 transition-transform shadow-md"
-              >
-                <FaPaperPlane />
-              </button>
-            </footer>
-          </>
-        ) : (
-          <div className="flex items-center justify-center flex-1 text-[#8DA2C0]">
-            Select a conversation to start chatting
+            ) : (
+              <div className="h-9 w-9 rounded-full bg-[#7F5AF0]/50 flex items-center justify-center font-bold text-white">
+                {selectedAccount.name.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div>
+              <p className="font-semibold">{selectedAccount.name}</p>
+              <p className="text-xs opacity-80">
+                {isUserOnline(selectedAccount.id) ? "Online ✅" : "Offline ❌"}
+              </p>
+            </div>
+          </div>
+        </header>
+
+        {/* Messages */}
+        <section className="flex-1 overflow-y-auto p-5 space-y-5 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] bg-fixed">
+          {loadingChat ? (
+            <div className="flex justify-center items-center h-full text-[#8DA2C0] animate-pulse">
+              Loading messages...
+            </div>
+          ) : chat.length > 0 ? (
+            chat.map((msg) => {
+              const isSender =
+                msg.senderId === currentUserId ||
+                msg.senderId?._id === currentUserId;
+              return (
+                <div
+                  key={msg._id}
+                  className={`flex ${isSender ? "justify-end" : "justify-start"}`}
+                  onClick={() => setReplyTo(msg)}
+                >
+                  <div
+                    className={`px-5 py-3 rounded-2xl shadow max-w-[70%] transition-all hover:scale-[1.01] ${
+                     isSender
+  ? "bg-blue-600/80 text-white backdrop-blur-md"
+  : "bg-white/10 backdrop-blur-md text-gray-100"
+
+                    }`}
+                  >
+                    {msg.replyTo && (
+                      <div className="text-xs bg-black/20 p-2 rounded mb-2 border-l-2 border-[#7F5AF0]">
+                        ↪ {msg.replyTo.message}
+                      </div>
+                    )}
+                    <div className="whitespace-pre-wrap break-words">
+                      {msg.message}
+                    </div>
+                    <div className="text-[11px] opacity-70 mt-1 text-right">
+                      {new Date(msg.createdAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                      {renderTicks(msg)}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="flex justify-center text-[#8DA2C0]">
+              No messages yet
+            </div>
+          )}
+
+          {/* Typing dots */}
+          {!loadingChat && typingUsers[selectedAccount?.id] && (
+            <div className="flex items-center justify-start pl-3">
+              <div className="bg-white/10 py-1 px-3 rounded-full flex gap-2">
+                <span className="w-2 h-2 bg-[#7F5AF0] rounded-full animate-bounce"></span>
+                <span className="w-2 h-2 bg-[#2CB67D] rounded-full animate-bounce delay-100"></span>
+                <span className="w-2 h-2 bg-[#FF8906] rounded-full animate-bounce delay-200"></span>
+              </div>
+            </div>
+          )}
+
+          <div ref={bottomRef} />
+        </section>
+
+        {/* Reply banner */}
+        {replyTo && (
+          <div className="bg-[#1E293B]/70 p-2 text-sm text-gray-200 border-l-4 border-[#7F5AF0] flex items-center justify-between">
+            <span>
+              Replying to:{" "}
+              <span className="text-white font-medium">
+                {replyTo.message}
+              </span>
+            </span>
+            <button
+              onClick={() => setReplyTo(null)}
+              className="ml-3 text-red-400 text-xs"
+            >
+              Cancel
+            </button>
           </div>
         )}
-      </main>
-    </div>
+
+        {/* Input */}
+        <footer className="p-4 flex gap-3 items-center backdrop-blur bg-[#0B1220]/70 border-t border-white/20">
+          <button
+            className="text-[#FF8906] text-2xl hover:scale-110 transition"
+            title="Emojis"
+          >
+            <FaSmile />
+          </button>
+          <input
+            type="text"
+            value={message}
+            disabled={loadingChat}
+            onChange={(e) => {
+              setMessage(e.target.value);
+              handleTyping();
+            }}
+            onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+            placeholder="Type your message..."
+            className="flex-1 bg-white/10 backdrop-blur rounded-full px-4 py-2 text-sm border border-white/20 focus:outline-none focus:ring-2 focus:ring-[#2CB67D]"
+          />
+          <button
+            onClick={handleSendMessage}
+            className="bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] p-3 rounded-full text-white hover:scale-110 transition-transform shadow-lg"
+          >
+            <FaPaperPlane />
+          </button>
+        </footer>
+      </>
+    ) : (
+      <div className="flex items-center justify-center flex-1 text-[#8DA2C0]">
+        👈 Select a conversation to start chatting
+      </div>
+    )}
+  </main>
+</div>
+
   );
 };
 
