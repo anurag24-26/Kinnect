@@ -1,6 +1,7 @@
 const Post = require("../models/post.model");
 const cloudinary = require("../config/cloudinary");
 
+// CREATE POST
 exports.createPost = async (req, res) => {
   try {
     const { text, tags } = req.body;
@@ -10,6 +11,7 @@ exports.createPost = async (req, res) => {
     console.log("📥 req.body:", req.body);
     console.log("📸 req.files:", req.files);
     console.log("👤 req.user:", req.user);
+
     if (req.files && req.files.length > 0) {
       for (const file of req.files.slice(0, 3)) {
         const result = await cloudinary.uploader.upload(file.path, {
@@ -34,6 +36,7 @@ exports.createPost = async (req, res) => {
   }
 };
 
+// GET USER POSTS
 exports.getUserPosts = async (req, res) => {
   try {
     const userId = req.params.id;
@@ -49,6 +52,8 @@ exports.getUserPosts = async (req, res) => {
       .json({ message: "Failed to fetch user's posts", error: err.message });
   }
 };
+
+// GET ALL POSTS
 exports.getAllPosts = async (req, res) => {
   try {
     const posts = await Post.find()
@@ -61,7 +66,8 @@ exports.getAllPosts = async (req, res) => {
       .json({ message: "Failed to fetch posts", error: err.message });
   }
 };
-// PUT /api/posts/:id
+
+// UPDATE POST
 exports.updatePost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -82,7 +88,8 @@ exports.updatePost = async (req, res) => {
       .json({ message: "Failed to update post", error: error.message });
   }
 };
-// DELETE /api/posts/:id
+
+// DELETE POST
 exports.deletePost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -102,7 +109,7 @@ exports.deletePost = async (req, res) => {
   }
 };
 
-// GET /api/posts/trending
+// GET TRENDING POSTS (by likes)
 exports.getTrendingPosts = async (req, res) => {
   try {
     const posts = await Post.find()
@@ -115,17 +122,34 @@ exports.getTrendingPosts = async (req, res) => {
       const likesA = a.likes?.length || 0;
       const likesB = b.likes?.length || 0;
 
-      // If likes are equal, sort by creation date (newer first)
       if (likesA === likesB) {
         return new Date(b.createdAt) - new Date(a.createdAt);
       }
       return likesB - likesA;
     });
 
-    res.status(200).json(trending.slice(0, 20)); // limit to top 20 trending
+    res.status(200).json(trending.slice(0, 20));
   } catch (err) {
     res
       .status(500)
       .json({ message: "Failed to fetch trending posts", error: err.message });
+  }
+};
+
+// GET TRENDING HASHTAGS
+exports.getTrendingHashtags = async (req, res) => {
+  try {
+    const hashtags = await Post.aggregate([
+      { $unwind: "$tags" },
+      { $group: { _id: "$tags", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 }, // top 10 hashtags
+    ]);
+
+    res.status(200).json(hashtags);
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: "Failed to fetch trending hashtags", error: err.message });
   }
 };

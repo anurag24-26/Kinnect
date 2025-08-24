@@ -8,6 +8,7 @@ const {
   getUserPosts,
   deletePost, // 👈 Add this
   getTrendingPosts,
+  getTrendingHashtags
 } = require("../controllers/post.controller");
 
 const requireAuth = require("../middlewares/auth.middleware");
@@ -21,4 +22,6 @@ router.get("/trending", requireAuth, getTrendingPosts);
 router.put("/:id", requireAuth, updatePost);
 router.delete("/:id", requireAuth, deletePost);
 
+
+router.get("/trending-hashtags", getTrendingHashtags);
 module.exports = router;
