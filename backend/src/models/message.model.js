@@ -11,6 +11,11 @@ const messageSchema = new mongoose.Schema(
       enum: ["sent", "delivered", "read"], 
       default: "sent" 
     },
+    replyTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Message",
+      default: null,   // will hold the message being replied to
+    },
   },
   { timestamps: true }
 );

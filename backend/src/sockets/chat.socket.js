@@ -17,31 +17,38 @@ const chatSocketHandler = (io, socket) => {
     }
   });
 
-  // Send message
-  socket.on("sendMessage", async ({ senderId, receiverId, message, type }, callback) => {
-    try {
-      const newMessage = await Message.create({
-        senderId,
-        receiverId,
-        message,
-        type: type || "text",
-        status: "sent",
-      });
+  // Send message (with optional replyTo)
+  socket.on(
+    "sendMessage",
+    async ({ senderId, receiverId, message, type, replyTo }, callback) => {
+      try {
+        const newMessage = await Message.create({
+          senderId,
+          receiverId,
+          message,
+          type: type || "text",
+          status: "sent",
+          replyTo: replyTo || null,
+        });
 
-      // Deliver to receiver
-      io.to(receiverId).emit("receiveMessage", newMessage);
+        // Populate replyTo for frontend display
+        const populatedMessage = await newMessage.populate("replyTo", "message senderId type");
 
-      // Deliver back to sender (confirmation)
-      if (receiverId !== senderId) {
-        socket.emit("receiveMessage", newMessage);
+        // Deliver to receiver
+        io.to(receiverId).emit("receiveMessage", populatedMessage);
+
+        // Deliver back to sender (confirmation)
+        if (receiverId !== senderId) {
+          socket.emit("receiveMessage", populatedMessage);
+        }
+
+        if (callback) callback({ success: true, message: populatedMessage });
+      } catch (err) {
+        console.error("❌ Message DB error:", err.message);
+        if (callback) callback({ success: false, error: "Message failed" });
       }
-
-      if (callback) callback({ success: true, message: newMessage });
-    } catch (err) {
-      console.error("❌ Message DB error:", err.message);
-      if (callback) callback({ success: false, error: "Message failed" });
     }
-  });
+  );
 
   // Delivered (receiver’s socket confirms receipt)
   socket.on("messageDelivered", async ({ messageId }) => {

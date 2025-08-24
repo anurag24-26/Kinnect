@@ -81,12 +81,17 @@ const Chat = () => {
 
       if (isActiveThread) {
         setChat((prev) => {
-          // avoid duplicates by checking _id
           if (prev.some((m) => m._id === data._id)) return prev;
           return [...prev, data].sort(
             (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
           );
         });
+
+        // Notify backend it's delivered
+        socket.emit("messageDelivered", { messageId: data._id });
+
+        // If chat is open, mark as read
+        socket.emit("messageRead", { messageId: data._id });
       }
 
       if (
@@ -97,7 +102,18 @@ const Chat = () => {
           ...prev,
           [data.senderId]: (prev[data.senderId] || 0) + 1,
         }));
+
+        // Mark delivered if not in open thread
+        socket.emit("messageDelivered", { messageId: data._id });
       }
+    };
+
+    const onMessageStatusUpdate = ({ messageId, status }) => {
+      setChat((prev) =>
+        prev.map((m) =>
+          m._id === messageId ? { ...m, status } : m
+        )
+      );
     };
 
     const onTyping = ({ senderId }) => {
@@ -120,12 +136,14 @@ const Chat = () => {
     };
 
     socket.on("receiveMessage", onReceiveMessage);
+    socket.on("messageStatusUpdate", onMessageStatusUpdate);
     socket.on("typing", onTyping);
     socket.on("userOnline", onUserOnline);
     socket.on("userOffline", onUserOffline);
 
     return () => {
       socket.off("receiveMessage", onReceiveMessage);
+      socket.off("messageStatusUpdate", onMessageStatusUpdate);
       socket.off("typing", onTyping);
       socket.off("userOnline", onUserOnline);
       socket.off("userOffline", onUserOffline);
@@ -139,39 +157,46 @@ const Chat = () => {
 
   // ✅ Load chat history
   const handleAccountClick = async (account) => {
-  setSelectedAccount(account);
-  setUnreadMessages((prev) => {
-    const next = { ...prev };
-    delete next[account.id];
-    return next;
-  });
+    setSelectedAccount(account);
+    setUnreadMessages((prev) => {
+      const next = { ...prev };
+      delete next[account.id];
+      return next;
+    });
 
-  setLoadingChat(true); // ⬅️ start loading
+    setLoadingChat(true);
 
-  try {
-    const res = await axios.get(
-      `https://kinnectbackend.onrender.com/api/messages/${currentUserId}/${account.id}`,
-      { headers: { Authorization: `Bearer ${token}` } }
+    try {
+      const res = await axios.get(
+        `https://kinnectbackend.onrender.com/api/messages/${currentUserId}/${account.id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const sorted = (res.data || []).sort(
+        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+      );
+      setChat(sorted);
+
+      // Mark all as read
+      sorted.forEach((msg) => {
+        if (msg.receiverId === currentUserId && msg.status !== "read") {
+          socket.emit("messageRead", { messageId: msg._id });
+        }
+      });
+    } catch (err) {
+      console.error("❌ Failed to load chat history", err);
+      setChat([]);
+    } finally {
+      setLoadingChat(false);
+    }
+
+    setTimeout(
+      () => bottomRef.current?.scrollIntoView({ behavior: "auto" }),
+      50
     );
+  };
 
-    const sorted = (res.data || []).sort(
-      (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-    );
-    setChat(sorted);
-  } catch (err) {
-    console.error("❌ Failed to load chat history", err);
-    setChat([]);
-  } finally {
-    setLoadingChat(false); // ⬅️ stop loading
-  }
-
-  setTimeout(
-    () => bottomRef.current?.scrollIntoView({ behavior: "auto" }),
-    50
-  );
-};
-
-  // ✅ Send message (optimistic update)
+  // ✅ Send message
   const handleSendMessage = () => {
     if (!selectedAccount || !message.trim()) return;
 
@@ -182,6 +207,7 @@ const Chat = () => {
       receiverId: selectedAccount.id,
       message: message.trim(),
       createdAt: new Date().toISOString(),
+      status: "sent",
       optimistic: true,
     };
 
@@ -198,10 +224,9 @@ const Chat = () => {
       (ack) => {
         if (ack?.success && ack.message) {
           setChat((prev) => {
-            // replace temp with real
             const withoutTemp = prev.filter((m) => m._id !== tempId);
             if (withoutTemp.some((m) => m._id === ack.message._id)) {
-              return withoutTemp; // avoid duplicates
+              return withoutTemp;
             }
             return [...withoutTemp, ack.message].sort(
               (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
@@ -234,6 +259,19 @@ const Chat = () => {
   };
 
   const isUserOnline = (userId) => onlineUsers.has(userId);
+
+  // ✅ Render tick marks based on message status
+  const renderTicks = (msg) => {
+    if (msg.failed) return " • failed";
+    if (msg.optimistic) return " • sending…";
+
+    if (msg.senderId !== currentUserId) return ""; // only for sender
+
+    if (msg.status === "sent") return " ✓";
+    if (msg.status === "delivered") return " ✓";
+    if (msg.status === "read") return " ✓✓";
+    return "";
+  };
 
   return (
     <div className="flex h-[80dvh] overflow-hidden bg-[#0B1220] text-[#E6F1FF] font-inter">
@@ -349,59 +387,60 @@ const Chat = () => {
             </header>
 
             {/* Messages */}
-<section className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
-  {loadingChat ? (
-    <div className="flex justify-center items-center h-full text-[#8DA2C0] animate-pulse">
-      Loading messages...
-    </div>
-  ) : chat.length > 0 ? (
-    chat.map((msg) => {
-      const isSender =
-        msg.senderId === currentUserId ||
-        msg.senderId?._id === currentUserId;
-      return (
-        <div
-          key={msg._id}
-          className={`flex ${isSender ? "justify-end" : "justify-start"}`}
-        >
-          <div
-            className={`px-4 py-2 max-w-[70%] rounded-2xl shadow ${
-              isSender
-                ? "bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] text-white"
-                : "bg-[#111827] text-[#E6F1FF]"
-            }`}
-          >
-            <div className="whitespace-pre-wrap break-words">
-              {msg.message}
-            </div>
-            <div className="text-[10px] opacity-70 mt-1 text-right">
-              {new Date(msg.createdAt).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-              {msg.failed && " • failed"}
-              {msg.optimistic && " • sending…"}
-            </div>
-          </div>
-        </div>
-      );
-    })
-  ) : (
-    <div className="flex justify-center text-[#8DA2C0]">
-      No messages yet
-    </div>
-  )}
+            <section className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
+              {loadingChat ? (
+                <div className="flex justify-center items-center h-full text-[#8DA2C0] animate-pulse">
+                  Loading messages...
+                </div>
+              ) : chat.length > 0 ? (
+                chat.map((msg) => {
+                  const isSender =
+                    msg.senderId === currentUserId ||
+                    msg.senderId?._id === currentUserId;
+                  return (
+                    <div
+                      key={msg._id}
+                      className={`flex ${
+                        isSender ? "justify-end" : "justify-start"
+                      }`}
+                    >
+                      <div
+                        className={`px-4 py-2 max-w-[70%] rounded-2xl shadow ${
+                          isSender
+                            ? "bg-gradient-to-r from-[#84ac84] to-[#70a1698a] text-black"
+                            : "bg-[#bdc3cf] text-[#000000]"
+                        }`}
+                      >
+                        <div className="whitespace-pre-wrap break-words">
+                          {msg.message}
+                        </div>
+                        <div className="text-[10px] opacity-70 mt-1 text-right">
+                          {new Date(msg.createdAt).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                          {renderTicks(msg)}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="flex justify-center text-[#8DA2C0]">
+                  No messages yet
+                </div>
+              )}
 
-  {/* Typing dots */}
-  {!loadingChat && typingUsers[selectedAccount?.id] && (
-    <div className="flex gap-1 items-center pl-1">
-      <span className="w-2 h-2 bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] rounded-full animate-bounce"></span>
-      <span className="w-2 h-2 bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] rounded-full animate-bounce delay-100"></span>
-      <span className="w-2 h-2 bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] rounded-full animate-bounce delay-200"></span>
-    </div>
-  )}
-  <div ref={bottomRef} />
-</section>
+              {/* Typing dots */}
+              {!loadingChat && typingUsers[selectedAccount?.id] && (
+                <div className="flex gap-1 items-center pl-1">
+                  <span className="w-2 h-2 bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] rounded-full animate-bounce"></span>
+                  <span className="w-2 h-2 bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] rounded-full animate-bounce delay-100"></span>
+                  <span className="w-2 h-2 bg-gradient-to-r from-[#7F5AF0] to-[#2CB67D] rounded-full animate-bounce delay-200"></span>
+                </div>
+              )}
+              <div ref={bottomRef} />
+            </section>
 
             {/* Input */}
             <footer className="p-3 bg-[#0F172A] flex gap-2 items-center border-t border-white/10">
@@ -414,7 +453,7 @@ const Chat = () => {
               <input
                 type="text"
                 value={message}
-                disabled={loadingChat}  
+                disabled={loadingChat}
                 onChange={(e) => {
                   setMessage(e.target.value);
                   handleTyping();
